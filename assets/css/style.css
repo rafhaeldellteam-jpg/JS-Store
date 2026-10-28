@@ -13,12 +13,13 @@
   --wine: #b0565f;          /* "MODA FEMININA" */
   --ink: #2a1a1c;           /* letras da logo */
   --ink-2: #5c4648;
-  --ink-3: #8c7577;
+  --ink-3: #775f61;         /* contraste 5,6:1 no fundo claro */
   --line: #f0d6d3;
   --white: #fff;
-  --ok: #3f8f6b;
-  --warn: #c7822c;
-  --gold-grad: linear-gradient(135deg, #e7b29f 0%, #c98672 35%, #f3cdbd 55%, #b26c58 100%);
+  --ok: #2b7552;            /* 5,3:1 */
+  --warn: #9a5d12;          /* 5,1:1 */
+  --gold-grad: linear-gradient(135deg, #efc0ae 0%, #d6957f 35%, #f6d6c8 55%, #c98672 100%);
+  --on-gold: #2a1a1c;       /* texto escuro sobre o dourado: 5,6:1 ou mais */
   --shadow-sm: 0 2px 10px rgba(122, 64, 54, .07);
   --shadow: 0 14px 40px -12px rgba(122, 64, 54, .25);
   --radius: 18px;
@@ -106,7 +107,7 @@ button { cursor: pointer; }
 .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .btn:active { transform: translateY(0) scale(.98); }
 .btn svg { width: 18px; height: 18px; }
-.btn-gold { --bg: var(--rose); --fg: #fff; background: var(--gold-grad); background-size: 200% 200%; border-color: transparent; animation: shine 6s ease infinite; }
+.btn-gold { --bg: var(--rose); --fg: var(--on-gold); font-weight: 600; background: var(--gold-grad); background-size: 200% 200%; border-color: transparent; animation: shine 6s ease infinite; }
 @keyframes shine { 50% { background-position: 100% 100%; } }
 .btn-ghost { --bg: transparent; --fg: var(--text); border-color: var(--text); }
 .btn-ghost:hover { background: var(--contrast); border-color: var(--contrast); color: var(--on-contrast); }
@@ -642,7 +643,7 @@ html.theme-switching ::view-transition-new(root) { animation: themeReveal .7s va
 .fb-item figcaption { display: flex; align-items: center; gap: 12px; }
 .fb-item figcaption b { display: block; font-weight: 600; font-size: 15px; }
 .fb-item figcaption small { color: var(--ink-3); font-size: 13px; }
-.fb-av { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--gold-grad); color: #fff; font-weight: 600; font-size: 17px; flex: 0 0 auto; }
+.fb-av { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--gold-grad); color: var(--on-gold); font-weight: 600; font-size: 17px; flex: 0 0 auto; }
 .stars { display: inline-flex; gap: 3px; }
 .stars svg { width: 18px; height: 18px; fill: var(--line); }
 .stars svg.on { fill: #e2a24a; }
@@ -880,3 +881,23 @@ img.is-error { opacity: 0 !important; }
   .hero-art .chip.c1 { bottom: -1%; left: 0; }
   .hero-art .chip.c2 { top: 6%; right: -2%; }
 }
+/* "voa" do título: dourado mais fechado para continuar legível */
+.hero h1 em { background-image: linear-gradient(135deg, #c98672 0%, #93533f 55%, #b26c58 100%); }
+:root[data-theme="dark"] .hero h1 em { background-image: linear-gradient(135deg, #f3cdbd 0%, #d6957f 55%, #efc0ae 100%); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero h1 em { background-image: linear-gradient(135deg, #f3cdbd 0%, #d6957f 55%, #efc0ae 100%); } }
+.footer .company { max-width: none; margin: 34px 0 0; font-size: 13px; color: var(--blush-300); }
+.footer .company a, .footer-bottom a { display: inline; padding: 0; color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* páginas legais */
+.legal-doc { max-width: 760px; margin: 0 auto; padding: 10px 0 70px; }
+.legal-doc h1 { font-family: var(--display); font-weight: 500; font-size: clamp(36px, 6vw, 54px); line-height: 1.05; margin: 10px 0 14px; }
+.legal-doc .lead { font-size: 18px; color: var(--ink-2); margin: 0 0 30px; }
+.legal-doc h2 { font-family: var(--display); font-weight: 600; font-size: 26px; margin: 34px 0 10px; }
+.legal-doc p, .legal-doc li { color: var(--ink-2); line-height: 1.7; }
+.legal-doc ul, .legal-doc ol { padding-left: 22px; }
+.legal-doc li { margin-bottom: 6px; }
+.legal-doc .small { font-size: 13.5px; margin-top: 30px; }
+.legal-contact { margin-top: 30px; padding: 22px; border-radius: 20px; background: var(--blush-100); }
+.legal-contact:empty { display: none; }
+.legal-contact h2 { margin-top: 0; }
+.row-btns { display: flex; gap: 10px; flex-wrap: wrap; }

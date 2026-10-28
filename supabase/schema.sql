@@ -61,6 +61,9 @@ create table if not exists public.config (
 -- colunas novas (para quem já rodou uma versão anterior deste arquivo)
 alter table public.config add column if not exists maps_url text default '';
 alter table public.config add column if not exists hero_imagem text default '';
+alter table public.config add column if not exists razao_social text default '';
+alter table public.config add column if not exists cnpj text default '';
+alter table public.config add column if not exists email text default '';
 
 insert into public.config (id, aviso_topo, hero_titulo, hero_subtitulo, promo_titulo, promo_texto, frete_gratis_acima, pix_desconto)
 values (1,

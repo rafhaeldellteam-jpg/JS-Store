@@ -21,7 +21,7 @@ export const SIZE_PRESETS = {
 
 export const DEFAULT_CONFIG = {
   id: 1,
-  whatsapp: "5511999999999",
+  whatsapp: "",            // vazio = pedidos pelo WhatsApp ficam travados até a loja cadastrar
   instagram: "js_store",
   aviso_topo: [
     "Frete grátis acima de R$ 299",
@@ -39,6 +39,10 @@ export const DEFAULT_CONFIG = {
   grupo_vip: "",
   endereco: "",
   maps_url: "",
+  // dados da empresa (Decreto 7.962/2013): aparecem no rodapé e nas páginas legais
+  razao_social: "",
+  cnpj: "",
+  email: "",
   hero_imagem: "",
   categorias: ["Vestidos", "Blusas", "Calças", "Saias", "Conjuntos", "Blazers"],
 };
@@ -101,6 +105,7 @@ function demoConfig() {
   const c = LS.get("config", null);
   if (c) {
     if (c.promo_titulo === "Semana da Borboleta") { c.promo_titulo = "Semana JS"; LS.set("config", c); }
+    if (c.whatsapp === "5511999999999") { c.whatsapp = ""; LS.set("config", c); }   // número de exemplo antigo
     return { ...DEFAULT_CONFIG, endereco: "São Paulo - SP", ...c };
   }
   const d = { ...DEFAULT_CONFIG, endereco: "São Paulo - SP", promo_fim: new Date(Date.now() + 3 * 86400000).toISOString() };

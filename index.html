@@ -49,8 +49,7 @@
       <div class="hero-art reveal" aria-hidden="true">
         <div class="halo"></div><div class="ring"></div><div class="ring r2"></div>
         <div class="hero-logo">
-          <img class="logo-l" src="/assets/img/logo-full.webp" alt="JS STORE · Moda Feminina" width="820" height="608" fetchpriority="high">
-          <img class="logo-d" src="/assets/img/logo-full-dark.webp" alt="" width="820" height="546" fetchpriority="high">
+          <img class="theme-img" data-light="/assets/img/logo-full.webp" data-dark="/assets/img/logo-full-dark.webp" alt="JS STORE · Moda Feminina" width="820" height="608" fetchpriority="high">
         </div>
         <div class="chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><span><b>Compra segura</b><br>atendimento humano</span></div>
         <div class="chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9.94 14.06 4 20M12 3l1.9 5.8L20 12l-6.1 3.2L12 21l-1.9-5.8L4 12l6.1-3.2Z"/></svg><span><b>Novidades</b><br>toda semana</span></div>
@@ -73,7 +72,7 @@
   <!-- PROMO COM CONTAGEM -->
   <section class="wrap" id="promo-wrap">
     <div class="promo reveal">
-      <img class="bfly-bg logo-l" src="/assets/img/butterfly.webp" alt="" aria-hidden="true"><img class="bfly-bg logo-d" src="/assets/img/butterfly-dark.webp" alt="" aria-hidden="true">
+      <img class="bfly-bg" src="/assets/img/butterfly-dark.webp" loading="lazy" alt="" aria-hidden="true">
       <div>
         <span class="eyebrow">Oferta especial</span>
         <h2 id="promo-title">Semana JS</h2>
@@ -146,5 +145,6 @@
 
 <div id="site-footer"></div>
 <script type="module" src="/assets/js/home.js"></script>
+<script>(function(){var d=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.querySelectorAll("img[data-light]").forEach(function(i){i.src=d==="dark"?i.dataset.dark:i.dataset.light})})()</script>
 </body>
 </html>

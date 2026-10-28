@@ -74,7 +74,7 @@ async function loadAll() {
 // ---------------- login ----------------
 function loginView(msg = "") {
   app.innerHTML = `<div class="login"><div class="login-box">
-    <img class="logo-l" src="/assets/img/logo-full.webp" alt="JS STORE"><img class="logo-d" src="/assets/img/logo-full-dark.webp" alt="">
+    <img class="theme-img" data-light="/assets/img/logo-full.webp" data-dark="/assets/img/logo-full-dark.webp" alt="JS STORE">
     <h1>Área da loja</h1><p class="muted" style="margin:0">Entre para gerenciar seus produtos</p>
     <form id="login-f">
       <div class="field"><label for="em">Usuário</label><input class="input" id="em" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
@@ -92,7 +92,7 @@ function loginView(msg = "") {
   };
 }
 function noAccessView(user) {
-  app.innerHTML = `<div class="login"><div class="login-box"><img class="logo-l" src="/assets/img/logo-full.webp" alt="JS STORE"><img class="logo-d" src="/assets/img/logo-full-dark.webp" alt="">
+  app.innerHTML = `<div class="login"><div class="login-box"><img class="theme-img" data-light="/assets/img/logo-full.webp" data-dark="/assets/img/logo-full-dark.webp" alt="JS STORE">
   <h1>Sem permissão</h1><p class="muted">O usuário <b>${esc(String(user.email).replace("@" + db.ADMIN_DOMAIN, ""))}</b> entrou, mas ainda não foi liberado como administrador.</p>
   <button class="btn btn-ghost btn-block" id="lo">Sair</button></div></div>`;
   $("#lo").onclick = async () => { await db.logout(); location.reload(); };
@@ -109,7 +109,7 @@ function shell(active, title, sub, content, actions = "") {
   const pill = (k) => (k === "pedidos" && pend ? `<span class="pill">${pend}</span>` : k === "feedbacks" && fbPend ? `<span class="pill">${fbPend}</span>` : k === "mais" && fbPend ? `<span class="pill">${fbPend}</span>` : "");
   app.innerHTML = `<div class="shell">
     <aside class="side">
-      <a class="brand" href="/" target="_blank"><img class="logo-l" src="/assets/img/butterfly.webp" alt="" width="40"><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt="" width="40"><span><b>JS STORE</b><small>PAINEL</small></span></a>
+      <a class="brand" href="/" target="_blank"><img src="/assets/img/butterfly-dark.webp" alt="" width="40"><span><b>JS STORE</b><small>PAINEL</small></span></a>
       ${NAV.map(([k, t, i]) => `<a class="nav-i ${active === k ? "on" : ""}" href="#${k}">${ic(i)} ${t}${pill(k)}</a>`).join("")}
       <div class="bottom">
         <a class="nav-i theme-btn" href="#" data-theme-toggle>${themeIcons()} Modo claro/escuro</a>
@@ -170,6 +170,8 @@ function dashboard() {
         </div>
       </div>
       <div>
+        ${String(S.config.whatsapp || "").replace(/\D/g, "").length < 12 ? `<a class="panel fb-alert" href="#config">${ic("alert")}<span><b>Cadastre o WhatsApp da loja</b><small>Sem ele, as clientes não conseguem finalizar pedidos</small></span></a>` : ""}
+        ${!S.config.cnpj || !S.config.razao_social ? `<a class="panel fb-alert" href="#config">${ic("alert")}<span><b>Preencha os dados da empresa</b><small>Nome, CNPJ e endereço precisam aparecer no site (lei do e-commerce)</small></span></a>` : ""}
         ${S.feedbacks.some((f) => f.status === "pendente") ? `<a class="panel fb-alert" href="#feedbacks">${ic("msg")}<span><b>${S.feedbacks.filter((f) => f.status === "pendente").length} feedback(s) esperando aprovação</b><small>Toque para revisar</small></span></a>` : ""}
         <div class="panel"><h3>Ações rápidas</h3>
           <div style="display:grid;gap:10px">
@@ -512,7 +514,7 @@ function configView() {
   <form id="cf" class="form-grid">
     <div>
       <div class="panel"><h3>Contato</h3>
-        <div class="field"><label for="wa">WhatsApp que recebe os pedidos *</label><input class="input" id="wa" inputmode="tel" value="${esc(c.whatsapp)}" placeholder="5511999999999"><span class="hint">Com código do país e DDD, só números. Ex.: 55 11 99999-9999 → 5511999999999</span></div>
+        <div class="field"><label for="wa">WhatsApp que recebe os pedidos</label><input class="input" id="wa" inputmode="tel" value="${esc(c.whatsapp)}" placeholder="5511999999999"><span class="hint">Com código do país e DDD, só números. Ex.: 55 11 99999-9999 → 5511999999999</span></div>
         <div class="row2">
           <div class="field"><label for="ig">Instagram</label><input class="input" id="ig" value="${esc(c.instagram)}" placeholder="js_store"></div>
           <div class="field"><label for="vip">Link do grupo VIP</label><input class="input" id="vip" value="${esc(c.grupo_vip)}" placeholder="https://chat.whatsapp.com/..."></div>
@@ -520,6 +522,15 @@ function configView() {
         <div class="field"><label for="end">Endereço da loja / região</label><input class="input" id="end" value="${esc(c.endereco)}" placeholder="Ex.: Rua das Flores, 120 - Centro, São Paulo - SP"><span class="hint">Aparece no rodapé e é usado no botão "Como chegar" (Google Maps).</span></div>
         <div class="field"><label for="maps">Link do Google Maps <span class="hint">(opcional)</span></label><input class="input" id="maps" value="${esc(c.maps_url)}" placeholder="https://maps.app.goo.gl/..."><span class="hint">No Google Maps, abra a loja, toque em Compartilhar e cole o link aqui. Se ficar vazio, usamos o endereço acima.</span></div>
         <div class="contact-preview" id="cprev"></div>
+      </div>
+      <div class="panel"><h3>Dados da empresa</h3>
+        <p class="hint" style="margin:-6px 0 14px">A lei do e-commerce (Decreto 7.962/2013) pede que o site mostre quem vende. Aparecem no rodapé e nas páginas de Trocas e Privacidade.</p>
+        <div class="field"><label for="rs">Nome / razão social</label><input class="input" id="rs" maxlength="120" value="${esc(c.razao_social || "")}" placeholder="Ex.: Maria Silva Moda LTDA ou nome do MEI"></div>
+        <div class="row2">
+          <div class="field"><label for="cnpj">CNPJ</label><input class="input" id="cnpj" inputmode="numeric" maxlength="18" value="${esc(c.cnpj || "")}" placeholder="00.000.000/0000-00"></div>
+          <div class="field"><label for="mail">E-mail de contato</label><input class="input" id="mail" type="email" maxlength="120" value="${esc(c.email || "")}" placeholder="contato@..."></div>
+        </div>
+        <p class="hint" style="margin:0">O endereço é o do campo "Endereço da loja" acima. Os textos das páginas legais são um modelo: vale pedir para o contador ou advogado revisar.</p>
       </div>
       <div class="panel"><h3>Página inicial</h3>
         <div class="field"><label for="ht">Título principal</label><input class="input" id="ht" maxlength="60" value="${esc(c.hero_titulo)}"></div>
@@ -560,16 +571,21 @@ function configView() {
       ${mapUrl ? `<a class="cp map" href="${mapUrl}" target="_blank" rel="noopener">${mapPin()} Maps</a>` : ""}`;
   };
   ["wa", "ig", "end", "maps"].forEach((id) => $("#" + id).addEventListener("input", drawPrev)); drawPrev();
+  $("#cnpj").addEventListener("input", (e) => {
+    const d = e.target.value.replace(/\D/g, "").slice(0, 14);
+    e.target.value = d.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+  });
   $("#cf").addEventListener("input", () => (S.dirty = true));
   $("#chpw")?.addEventListener("click", changePasswordModal);
   $("#resetdemo")?.addEventListener("click", () => { if (confirm("Apagar seus testes e voltar aos dados de exemplo?")) { db.resetDemo(); location.reload(); } });
   $("#cf").onsubmit = async (e) => {
     e.preventDefault();
     const wa = $("#wa").value.replace(/\D/g, "");
-    if (wa.length < 12) { toast("Confira o WhatsApp: use 55 + DDD + número.", { err: true }); return; }
+    if (wa && wa.length < 12) { toast("Confira o WhatsApp: use 55 + DDD + número.", { err: true }); return; }
     const cfg = {
       whatsapp: wa, instagram: $("#ig").value.trim().replace(/^@/, ""), grupo_vip: $("#vip").value.trim(), endereco: $("#end").value.trim(),
       maps_url: $("#maps").value.trim(),
+      razao_social: $("#rs").value.trim(), cnpj: $("#cnpj").value.trim(), email: $("#mail").value.trim(),
       hero_titulo: $("#ht").value.trim(), hero_subtitulo: $("#hs").value.trim(),
       aviso_topo: $("#av").value.split("\n").map((s) => s.trim()).filter(Boolean),
       promo_titulo: $("#pt").value.trim(), promo_texto: $("#px").value.trim(),

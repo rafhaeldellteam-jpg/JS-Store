@@ -27,8 +27,17 @@ async function whatsappCheckout({ cfg, items, onDone }) {
   const total = items.reduce((a, i) => a + i.preco * i.qtd, 0);
   const pix = Number(cfg.pix_desconto) || 0;
 
+  // sem WhatsApp cadastrado o pedido não pode ir para lugar nenhum: avisa e não registra
+  if (String(cfg.whatsapp || "").replace(/\D/g, "").length < 12) {
+    const ig = String(cfg.instagram || "").replace(/^@/, "");
+    modal(`<h3>Quase pronto por aqui</h3>
+      <p class="muted" style="margin:0 0 18px">Estamos finalizando nosso canal de atendimento e em breve você poderá concluir seu pedido por aqui. Sua sacola fica guardada neste aparelho.</p>
+      ${ig ? `<a class="btn btn-gold btn-block" href="https://instagram.com/${encodeURIComponent(ig)}" target="_blank" rel="noopener">${icon("insta")} Falar com a loja no Instagram</a>` : ""}`);
+    return;
+  }
+
   modal(`
-    <h3 class="h-ic"><img class="logo-l" src="/assets/img/butterfly.webp" alt="" width="34"><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt="" width="34"> Quase lá!</h3>
+    <h3 class="h-ic"><img class="theme-img" data-light="/assets/img/butterfly.webp" data-dark="/assets/img/butterfly-dark.webp" alt="" width="34"> Quase lá!</h3>
     <p class="muted" style="margin:0 0 18px">Preencha rapidinho e seu pedido vai prontinho para o WhatsApp da loja.</p>
     <form id="co-form">
       <div class="field"><label for="co-nome">Seu nome *</label><input class="input" id="co-nome" required maxlength="120" value="${escH(saved.nome || "")}" autocomplete="name"></div>
@@ -38,6 +47,7 @@ async function whatsappCheckout({ cfg, items, onDone }) {
       <div class="field"><label>Forma de pagamento</label><div class="opts" data-group="pag"><button type="button" class="opt sel">Pix${pix ? ` (-${pix}%)` : ""}</button><button type="button" class="opt">Cartão</button><button type="button" class="opt">Dinheiro</button></div></div>
       <div class="field"><label for="co-obs">Observação</label><textarea class="textarea" id="co-obs" maxlength="500" placeholder="Algum detalhe? (opcional)"></textarea></div>
       <div class="totals big"><span>Total</span><span>${fmt(total)}</span></div>
+      <p class="hint" style="margin:0 0 12px">Seus dados são usados só para atender este pedido. Veja a <a class="link" href="/privacidade" target="_blank">Política de Privacidade</a>.</p>
       <button class="btn btn-wa btn-block" id="co-send">${waIcon} Enviar pedido no WhatsApp</button>
     </form>`, {
     onOpen(m) {

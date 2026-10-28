@@ -1,4 +1,8 @@
 {
+  "buildCommand": "node scripts/build.mjs",
+  "outputDirectory": "dist",
+  "installCommand": "echo sem-dependencias",
+  "framework": null,
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [

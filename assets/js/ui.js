@@ -62,7 +62,7 @@ export function currentTheme() {
 }
 export function toggleTheme(ev) {
   const next = currentTheme() === "dark" ? "light" : "dark";
-  const apply = () => { document.documentElement.dataset.theme = next; try { localStorage.setItem(THEME_KEY, next); } catch {} syncThemeColor(); };
+  const apply = () => { document.documentElement.dataset.theme = next; try { localStorage.setItem(THEME_KEY, next); } catch {} syncThemeColor(); applyThemeImages(); };
   const root = document.documentElement;
   if (ev && ev.clientX != null) { root.style.setProperty("--tx", ev.clientX + "px"); root.style.setProperty("--ty", ev.clientY + "px"); }
   if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -85,6 +85,36 @@ export function mapPin(cls = "map-pin") {
 export function syncThemeColor() {
   const c = currentTheme() === "dark" ? "#161012" : "#fff8f7";
   document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", c));
+}
+
+/** Coloca em cada <img data-light data-dark> só o arquivo do tema atual (a outra versão nem é baixada). */
+export function applyThemeImages(root = document) {
+  const dark = currentTheme() === "dark";
+  root.querySelectorAll?.("img[data-light]").forEach((i) => {
+    const src = dark ? i.dataset.dark : i.dataset.light;
+    if (i.getAttribute("src") !== src) i.setAttribute("src", src);
+  });
+}
+new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) { if (n.matches?.("img[data-light]")) applyThemeImages(n.parentNode); else applyThemeImages(n); } })
+  .observe(document.documentElement, { childList: true, subtree: true });
+applyThemeImages();
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { applyThemeImages(); syncThemeColor(); });
+
+/** Informações para o Google (dados estruturados) e prévias. */
+export function setMeta({ title, description, image, url, jsonld } = {}) {
+  const head = document.head;
+  const meta = (attr, key, val) => { if (!val) return; let m = head.querySelector(`meta[${attr}="${key}"]`); if (!m) { m = document.createElement("meta"); m.setAttribute(attr, key); head.append(m); } m.setAttribute("content", val); };
+  if (title) { document.title = title; meta("property", "og:title", title); }
+  meta("name", "description", description); meta("property", "og:description", description);
+  if (image) meta("property", "og:image", new URL(image, location.origin).href);
+  if (url) {
+    let l = head.querySelector('link[rel="canonical"]'); if (!l) { l = document.createElement("link"); l.rel = "canonical"; head.append(l); }
+    l.href = url; meta("property", "og:url", url);
+  }
+  if (jsonld) {
+    let s = head.querySelector("script[data-ld]"); if (!s) { s = document.createElement("script"); s.type = "application/ld+json"; s.dataset.ld = ""; head.append(s); }
+    s.textContent = JSON.stringify(jsonld);
+  }
 }
 
 export const themeIcons = () => `${icon("moon", "i-moon")}${icon("sun", "i-sun")}`;
@@ -183,9 +213,32 @@ export function toast(html, { err = false, img = null, action = null, ms = 3600,
   setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 350); }, ms);
 }
 
+// ---------- foco (teclado e leitores de tela) ----------
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+const focusStack = [];
+function focusInto(el) {
+  focusStack.push(document.activeElement);
+  setTimeout(() => {
+    const first = [...el.querySelectorAll(FOCUSABLE)].find((x) => x.offsetParent !== null && !x.closest(".hidden"));
+    (first || el).focus({ preventScroll: true });
+  }, 60);
+}
+function restoreFocus() { const el = focusStack.pop(); if (el && document.contains(el)) el.focus({ preventScroll: true }); }
+function openLayer() { return $("#modal.open .modal-box") || $(".drawer.open") || $(".mnav.open"); }
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Tab") return;
+  const layer = openLayer(); if (!layer) return;
+  const items = [...layer.querySelectorAll(FOCUSABLE)].filter((x) => x.offsetParent !== null);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (!layer.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
 // ---------- modal ----------
 export function modal(html, { onOpen } = {}) {
-  closeModal();
+  closeModal(true);
   const m = document.createElement("div");
   m.className = "modal"; m.id = "modal";
   m.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true"><button class="icon-btn modal-close" aria-label="Fechar">${icon("x")}</button>${html}</div>`;
@@ -194,14 +247,20 @@ export function modal(html, { onOpen } = {}) {
   m.querySelector(".modal-close").onclick = closeModal;
   m.addEventListener("click", (e) => { if (e.target === m) closeModal(); });
   requestAnimationFrame(() => m.classList.add("open"));
+  m.querySelector(".modal-box").setAttribute("aria-label", (m.querySelector("h3")?.textContent || "Janela").trim());
+  document.body.style.overflow = "hidden";
   onOpen && onOpen(m);
+  focusInto(m.querySelector(".modal-box"));
   return m;
 }
-export function closeModal() {
+export function closeModal(replacing = false) {
   const m = $("#modal"); if (!m) return;
-  m.classList.remove("open");
-  if (!$(".drawer.open") && !$(".mnav.open")) $("#overlay")?.classList.remove("open");
-  setTimeout(() => m.remove(), 300);
+  m.id = ""; m.classList.remove("open");
+  if (!replacing) {
+    if (!$(".drawer.open") && !$(".mnav.open")) { $("#overlay")?.classList.remove("open"); document.body.style.overflow = ""; }
+    restoreFocus();
+  } else focusStack.pop();
+  setTimeout(() => m.remove(), 400);
 }
 
 export function sizeGuide() {
@@ -216,18 +275,23 @@ export function sizeGuide() {
 
 // ---------- gavetas ----------
 export function openDrawer(which) {
-  closeMenu();
+  const wasOpen = !!$(".drawer.open, .mnav.open");
+  closeMenu(true);
   $$(".drawer").forEach((d) => d.classList.toggle("open", d.id === "drawer-" + which));
   $("#overlay").classList.add("open");
   document.body.style.overflow = "hidden";
+  if (wasOpen) focusStack.pop();
+  focusInto($("#drawer-" + which));
 }
 export function closeDrawers() {
+  const had = !!$(".drawer.open, .mnav.open");
   $$(".drawer").forEach((d) => d.classList.remove("open"));
-  closeMenu();
-  if (!$("#modal")) $("#overlay").classList.remove("open");
-  document.body.style.overflow = "";
+  closeMenu(true);
+  if (!$("#modal.open")) { $("#overlay").classList.remove("open"); document.body.style.overflow = ""; }
+  if (had) restoreFocus();
 }
 function closeMenu() { $(".mnav")?.classList.remove("open"); }
+function openMenu() { $("#mnav").classList.add("open"); $("#overlay").classList.add("open"); document.body.style.overflow = "hidden"; focusInto($("#mnav")); }
 
 function updateBadges(bump) {
   const set = (id, n) => {
@@ -245,7 +309,7 @@ function renderCart() {
   const items = cart.items();
   const cfg = state.config || {};
   if (!items.length) {
-    body.innerHTML = `<div class="empty"><img class="logo-l" src="/assets/img/butterfly.webp" alt=""><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt=""><p>Sua sacola está vazia.</p><a class="btn btn-ghost btn-sm" href="/loja">Ver novidades</a></div>`;
+    body.innerHTML = `<div class="empty"><img class="theme-img" data-light="/assets/img/butterfly.webp" data-dark="/assets/img/butterfly-dark.webp" alt=""><p>Sua sacola está vazia.</p><a class="btn btn-ghost btn-sm" href="/loja">Ver novidades</a></div>`;
     foot.classList.add("hidden"); return;
   }
   foot.classList.remove("hidden");
@@ -277,7 +341,7 @@ function renderFavs() {
     <div class="line-item"><a href="/produto?p=${encodeURIComponent(i.slug)}"><img src="${esc(i.img)}" alt=""></a>
     <div><h5>${esc(i.nome)}</h5><small>${brl(i.preco)}</small><a class="btn btn-ghost btn-sm" style="margin-top:10px" href="/produto?p=${encodeURIComponent(i.slug)}">Escolher tamanho</a></div>
     <button class="icon-btn" data-unfav="${esc(i.id)}" aria-label="Remover">${icon("x")}</button></div>`).join("")
-    : `<div class="empty"><img class="logo-l" src="/assets/img/butterfly.webp" alt=""><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt=""><p>Toque no ${icon("heart", "inline-ic")} das peças que você amar para salvar aqui.</p></div>`;
+    : `<div class="empty"><img class="theme-img" data-light="/assets/img/butterfly.webp" data-dark="/assets/img/butterfly-dark.webp" alt=""><p>Toque no ${icon("heart", "inline-ic")} das peças que você amar para salvar aqui.</p></div>`;
 }
 
 // ---------- cartão de produto ----------
@@ -328,11 +392,12 @@ function layout(cfg, active) {
   const mq = avisos.length ? avisos.map((a) => `<span>${esc(a)}</span>`).join("") : "";
   const links = [["/", "Início"], ["/loja", "Loja"], ["/loja?f=novidades", "Novidades"], ["/loja?f=promo", "Promoções"]];
   const nav = links.map(([h, t]) => `<a href="${h}" class="${active === h ? "active" : ""}">${t}</a>`).join("");
-  const brand = `<a class="brand" href="/" aria-label="JS STORE - início"><img class="logo-l" src="/assets/img/butterfly.webp" alt="" width="44" height="34"><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt="" width="44" height="34"><span><b>JS STORE</b><small>MODA FEMININA</small></span></a>`;
+  const brand = `<a class="brand" href="/" aria-label="JS STORE - início"><img class="theme-img" data-light="/assets/img/butterfly.webp" data-dark="/assets/img/butterfly-dark.webp" alt="" width="44" height="34"><span><b>JS STORE</b><small>MODA FEMININA</small></span></a>`;
+    const brandDark = `<a class="brand" href="/" aria-label="JS STORE - início"><img src="/assets/img/butterfly-dark.webp" loading="lazy" alt="" width="44" height="34"><span><b>JS STORE</b><small>MODA FEMININA</small></span></a>`;
   const header = `
   ${mq ? `<div class="topbar"><div class="marquee">${mq}${mq}${mq}${mq}</div></div>` : ""}
   <header class="header" id="header"><div class="wrap header-in">
-    <div style="display:flex;align-items:center;gap:20px"><button class="icon-btn menu-btn" id="menu-btn" aria-label="Menu">${icon("menu")}</button><nav class="nav">${nav}</nav></div>
+    <div style="display:flex;align-items:center;gap:20px"><button class="icon-btn menu-btn" id="menu-btn" aria-label="Abrir menu" aria-controls="mnav">${icon("menu")}</button><nav class="nav">${nav}</nav></div>
     ${brand}
     <div class="actions">
       <button class="icon-btn theme-btn" data-theme-toggle aria-label="Alternar modo escuro" title="Modo claro/escuro">${themeIcons()}</button>
@@ -342,15 +407,15 @@ function layout(cfg, active) {
     </div></div>
     <div class="search-bar" id="search-bar"><form class="wrap" action="/loja"><input class="input" name="q" placeholder="O que você procura? Ex.: vestido, blazer..." autocomplete="off"><button class="btn btn-sm">Buscar</button></form></div>
   </header>
-  <nav class="mnav" id="mnav">${brand}<form class="mnav-search" action="/loja" role="search"><input class="input" name="q" type="search" placeholder="Buscar peças" enterkeyhint="search" autocomplete="off">${icon("search")}</form>${links.map(([h, t]) => `<a href="${h}">${t}</a>`).join("")}<div class="mnav-foot"><button class="btn btn-gold btn-sm hidden" data-install>${icon("download")} Instalar app</button><button class="btn btn-ghost btn-sm theme-btn" data-theme-toggle>${themeIcons()} Claro / escuro</button></div><a href="/admin/" style="font-size:16px;font-family:var(--sans);border:0;color:var(--ink-3)">Área da loja</a></nav>`;
+  <nav class="mnav" id="mnav" aria-label="Menu" tabindex="-1">${brand}<form class="mnav-search" action="/loja" role="search"><input class="input" name="q" type="search" placeholder="Buscar peças" enterkeyhint="search" autocomplete="off">${icon("search")}</form>${links.map(([h, t]) => `<a href="${h}">${t}</a>`).join("")}<div class="mnav-foot"><button class="btn btn-gold btn-sm hidden" data-install>${icon("download")} Instalar app</button><button class="btn btn-ghost btn-sm theme-btn" data-theme-toggle>${themeIcons()} Claro / escuro</button></div><a href="/admin/" style="font-size:16px;font-family:var(--sans);border:0;color:var(--ink-3)">Área da loja</a></nav>`;
 
   const L = contactLinks(cfg);
   const footer = `
   <footer class="footer"><div class="wrap">
     <div class="footer-grid">
-      <div>${brand}<p style="margin-top:16px">Moda feminina com curadoria cuidadosa, atendimento próximo e aquele toque de delicadeza em cada detalhe.</p></div>
+      <div>${brandDark}<p style="margin-top:16px">Moda feminina com curadoria cuidadosa, atendimento próximo e aquele toque de delicadeza em cada detalhe.</p></div>
       <div><h4>Loja</h4><a href="/loja">Todas as peças</a><a href="/loja?f=novidades">Novidades</a><a href="/loja?f=promo">Promoções</a><a href="/loja?f=destaque">Mais amadas</a></div>
-      <div><h4>Ajuda</h4><a href="#" data-sizeguide>Guia de medidas</a><a href="${waLink(cfg.whatsapp, "Olá! Tenho uma dúvida sobre trocas.")}" target="_blank" rel="noopener">Trocas e devoluções</a><a href="${waLink(cfg.whatsapp, "Olá! Vim pelo site da JS STORE.")}" target="_blank" rel="noopener">Fale com a gente</a></div>
+      <div><h4>Ajuda</h4><a href="#" data-sizeguide>Guia de medidas</a><a href="/trocas">Trocas e devoluções</a><a href="/privacidade">Política de privacidade</a>${L.wa() ? `<a href="${L.wa()}" target="_blank" rel="noopener">Fale com a gente</a>` : ""}</div>
       <div><h4>Contato</h4>
         <div class="contact-list">
           ${L.wa() ? `<a href="${L.wa()}" target="_blank" rel="noopener"><span class="ci wa">${waIcon}</span>WhatsApp</a>` : ""}
@@ -360,7 +425,8 @@ function layout(cfg, active) {
         </div></div>
     </div>
     <button class="install-card hidden" data-install><img src="/assets/img/icon-192.png" alt="" width="44" height="44"><span><b>Baixe o app da JS STORE</b><small>Acesso rápido direto da tela inicial do seu celular</small></span>${icon("download")}</button>
-    <div class="footer-bottom"><span>© ${new Date().getFullYear()} JS STORE · Moda Feminina. Todos os direitos reservados.</span><div class="pay"><span>Pix</span><span>Cartão</span><span>Dinheiro</span></div></div>
+    ${cfg.razao_social || cfg.cnpj || cfg.endereco || cfg.email ? `<p class="company">${[cfg.razao_social && esc(cfg.razao_social), cfg.cnpj && "CNPJ " + esc(cfg.cnpj), cfg.endereco && esc(cfg.endereco), cfg.email && `<a href="mailto:${esc(cfg.email)}">${esc(cfg.email)}</a>`].filter(Boolean).join(" · ")}</p>` : ""}
+    <div class="footer-bottom"><span>© ${new Date().getFullYear()} JS STORE · Moda Feminina. Todos os direitos reservados. <a href="/privacidade">Privacidade</a> · <a href="/trocas">Trocas</a></span><div class="pay"><span>Pix</span><span>Cartão</span><span>Dinheiro</span></div></div>
     <div class="dev-credit">
       <span>Desenvolvido por</span>
       <a href="${DEV_WA}" target="_blank" rel="noopener noreferrer" title="Falar com Phael Tech Support no WhatsApp"><img src="/assets/img/phael-logo.webp" alt="Phael Tech Support" width="535" height="217" loading="lazy"></a>
@@ -372,8 +438,8 @@ function layout(cfg, active) {
     ${L.wa() ? `<a class="sf sf-wa" href="${L.wa()}" target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><span class="sf-tip">Fale conosco</span>${waIcon}</a>` : ""}
   </div>
   <div class="overlay" id="overlay"></div>
-  <aside class="drawer" id="drawer-cart" aria-label="Sacola"><div class="drawer-head"><h3>Sua sacola</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x")}</button></div><div class="drawer-body"></div><div class="drawer-foot"></div></aside>
-  <aside class="drawer" id="drawer-favs" aria-label="Favoritos"><div class="drawer-head"><h3>Favoritos</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x")}</button></div><div class="drawer-body"></div></aside>
+  <aside class="drawer" id="drawer-cart" role="dialog" aria-modal="true" aria-label="Sacola" tabindex="-1"><div class="drawer-head"><h3>Sua sacola</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x")}</button></div><div class="drawer-body"></div><div class="drawer-foot"></div></aside>
+  <aside class="drawer" id="drawer-favs" role="dialog" aria-modal="true" aria-label="Favoritos" tabindex="-1"><div class="drawer-head"><h3>Favoritos</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x")}</button></div><div class="drawer-body"></div></aside>
   ${DEMO_MODE ? `<div style="position:fixed;left:14px;bottom:14px;z-index:45;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:11.5px;color:var(--ink-3);box-shadow:var(--shadow-sm)">Modo demonstração</div>` : ""}`;
 
   $("#site-header").innerHTML = header;
@@ -386,7 +452,7 @@ function bindGlobal() {
     if (!t) { if (e.target.id === "overlay") { closeDrawers(); closeModal(); } return; }
     if (t.id === "cart-btn") openDrawer("cart");
     else if (t.id === "fav-btn") openDrawer("favs");
-    else if (t.id === "menu-btn") { $("#mnav").classList.add("open"); $("#overlay").classList.add("open"); }
+    else if (t.id === "menu-btn") openMenu();
     else if (t.id === "search-btn") { const s = $("#search-bar"); s.classList.toggle("open"); if (s.classList.contains("open")) setTimeout(() => s.querySelector("input").focus(), 200); }
     else if (t.hasAttribute("data-close")) closeDrawers();
     else if (t.hasAttribute("data-theme-toggle")) toggleTheme(e);
@@ -405,7 +471,7 @@ function bindGlobal() {
       const p = state.products.find((x) => x.id === t.dataset.quick); p && cart.add(p, t.dataset.size);
     }
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeDrawers(); closeModal(); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if ($("#modal.open")) closeModal(); else closeDrawers(); } });
   // cabeçalho: some ao descer, volta ao subir
   const h = $("#header");
   let lastY = scrollY, ticking = false;

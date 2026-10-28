@@ -20,12 +20,13 @@
 <body>
 <main style="min-height:100dvh;display:grid;place-items:center;text-align:center;padding:24px">
   <div>
-    <img class="logo-l" src="/assets/img/butterfly.webp" alt="" style="width:140px;margin:0 auto 14px;animation:float 6s ease-in-out infinite"><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt="" style="width:140px;margin:0 auto 14px;animation:float 6s ease-in-out infinite">
+    <img class="theme-img" data-light="/assets/img/butterfly.webp" data-dark="/assets/img/butterfly-dark.webp" alt="" style="width:140px;margin:0 auto 14px;animation:float 6s ease-in-out infinite">
     <h1 style="font-family:var(--display);font-weight:500;font-size:40px;margin:0">Você está sem internet</h1>
     <p class="muted" style="max-width:340px;margin:10px auto 22px">Assim que a conexão voltar, a vitrine da JS STORE aparece de novo.</p>
     <button class="btn btn-gold" onclick="location.reload()">Tentar de novo</button>
   </div>
 </main>
 <script>addEventListener("online",()=>location.reload())</script>
+<script>(function(){var d=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.querySelectorAll("img[data-light]").forEach(function(i){i.src=d==="dark"?i.dataset.dark:i.dataset.light})})()</script>
 </body>
 </html>

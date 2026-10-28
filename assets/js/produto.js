@@ -1,5 +1,5 @@
 import { getProduct, listProducts, stockTotal, finalPrice } from "./data.js";
-import { initPage, state, productCard, observeReveal, cart, favs, recent, sizeGuide, openDrawer, toast, $, $$, esc, brl, icon, waLink, waIcon, imgOf } from "./ui.js";
+import { initPage, state, productCard, observeReveal, cart, favs, recent, sizeGuide, openDrawer, toast, setMeta, $, $$, esc, brl, icon, waLink, waIcon, imgOf } from "./ui.js";
 
 const cfg = await initPage("/loja");
 const slug = new URLSearchParams(location.search).get("p");
@@ -7,13 +7,27 @@ let p = null;
 try { p = slug ? await getProduct(slug) : null; } catch (e) { console.error(e); }
 
 if (!p || (!p.ativo && p.ativo !== undefined)) {
-  $("#pdp").innerHTML = `<div class="empty" style="padding:100px 0"><img class="logo-l" src="/assets/img/butterfly.webp" alt=""><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt=""><h2 style="font-family:var(--display);font-weight:500;font-size:36px;color:var(--text)">Peça não encontrada</h2><p>Ela pode ter esgotado ou saído da loja.</p><a class="btn" href="/loja">Ver outras peças</a></div>`;
+  $("#pdp").innerHTML = `<div class="empty" style="padding:100px 0"><img class="theme-img" data-light="/assets/img/butterfly.webp" data-dark="/assets/img/butterfly-dark.webp" alt=""><h2 style="font-family:var(--display);font-weight:500;font-size:36px;color:var(--text)">Peça não encontrada</h2><p>Ela pode ter esgotado ou saído da loja.</p><a class="btn" href="/loja">Ver outras peças</a></div>`;
 } else render();
 
 function render() {
   state.products = [p];
   recent.push(p.id);
-  document.title = `${p.nome} · JS STORE`;
+  {
+    const url = `${location.origin}/produto?p=${encodeURIComponent(p.slug)}`;
+    const preco = finalPrice(p), estoque = stockTotal(p);
+    const desc = `${p.nome} por ${preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}. ${String(p.descricao || "").slice(0, 140)}`;
+    setMeta({
+      title: `${p.nome} · JS STORE`, description: desc, image: imgOf(p), url,
+      jsonld: {
+        "@context": "https://schema.org", "@type": "Product", name: p.nome, description: p.descricao || p.nome,
+        image: (p.imagens || []).map((u) => new URL(u, location.origin).href), sku: String(p.id), category: p.categoria,
+        brand: { "@type": "Brand", name: "JS STORE" }, color: (p.cores || []).join(", ") || undefined,
+        offers: { "@type": "Offer", url, priceCurrency: "BRL", price: preco.toFixed(2), itemCondition: "https://schema.org/NewCondition",
+          availability: estoque ? "https://schema.org/InStock" : "https://schema.org/OutOfStock" },
+      },
+    });
+  }
   const fp = finalPrice(p), sale = fp < Number(p.preco), total = stockTotal(p);
   const pix = Number(cfg.pix_desconto) || 0;
   const imgs = p.imagens?.length ? p.imagens : [imgOf(p)];
@@ -41,10 +55,10 @@ function render() {
         <div class="buy-row">
           <div class="qty"><button id="q-minus" aria-label="Diminuir">−</button><span id="q">1</span><button id="q-plus" aria-label="Aumentar">+</button></div>
           ${total ? `<button class="btn btn-gold" id="add">${icon("bag")} Adicionar à sacola</button>`
-                  : `<a class="btn btn-wa" target="_blank" rel="noopener" href="${waLink(cfg.whatsapp, `Oi! A peça "${p.nome}" vai voltar ao estoque? Quero ser avisada.`)}">${icon("bell")} Avise-me quando chegar</a>`}
+                  : cfg.whatsapp ? `<a class="btn btn-wa" target="_blank" rel="noopener" href="${waLink(cfg.whatsapp, `Oi! A peça "${p.nome}" vai voltar ao estoque? Quero ser avisada.`)}">${icon("bell")} Avise-me quando chegar</a>` : `<button class="btn" disabled>Esgotado</button>`}
           <button class="fav ${favs.has(p.id) ? "on" : ""}" id="fav" aria-label="Favoritar">${icon("heart")}</button>
         </div>
-        ${total ? `<a class="btn btn-ghost btn-block" style="margin-top:10px" id="ask" target="_blank" rel="noopener" href="#">${waIcon} Tirar dúvida no WhatsApp</a>` : ""}
+        ${total && cfg.whatsapp ? `<a class="btn btn-ghost btn-block" style="margin-top:10px" id="ask" target="_blank" rel="noopener" href="#">${waIcon} Tirar dúvida no WhatsApp</a>` : ""}
         <ul class="perks">
           <li>${icon("shield")} Compra segura com atendimento direto da loja</li>
           <li>${icon("truck")} ${cfg.frete_gratis_acima ? `Frete grátis acima de ${brl(cfg.frete_gratis_acima)}` : "Entrega ou retirada combinada"}</li>
@@ -52,7 +66,7 @@ function render() {
         </ul>
       </div>
       <details class="acc" open><summary>Descrição</summary><p>${esc(p.descricao || "Peça da curadoria JS STORE.")}</p></details>
-      <details class="acc"><summary>Trocas e devoluções</summary><p>Não serviu ou não amou? Você tem até 7 dias após o recebimento para solicitar a troca. A peça deve estar sem uso e com etiqueta. É só chamar a gente no WhatsApp.</p></details>
+      <details class="acc"><summary>Trocas e devoluções</summary><p>Não serviu ou não amou? Você tem até 7 dias após o recebimento para solicitar a troca. A peça deve estar sem uso e com etiqueta. <a class="link" href="/trocas">Ver todas as regras de troca</a>.</p></details>
       <div class="share-row"><button class="btn btn-ghost btn-sm" id="share">${icon("share")} Compartilhar</button></div>
     </div>
   </div>`;

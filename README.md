@@ -53,7 +53,14 @@ Depois disso, entre em `/admin` com o usuário **admin** e a senha criada e vá 
 
 ## Deploy na Vercel
 
-Projeto importado do GitHub, sem build (*Framework Preset: Other*). Cada `git push` na `main` publica uma nova versão.
+Projeto importado do GitHub. O `vercel.json` já configura tudo: a Vercel roda `node scripts/build.mjs` (sem dependências) e publica a pasta `dist/`. Cada `git push` na `main` publica uma nova versão.
+
+O build:
+- completa os endereços absolutos (prévia no WhatsApp/Instagram e `canonical`);
+- gera `robots.txt` e `sitemap.xml` (com os produtos, quando o Supabase estiver ligado; produtos novos entram no próximo deploy);
+- troca a versão do cache do app a cada deploy.
+
+Com domínio próprio, crie a variável de ambiente `SITE_URL` (ex.: `https://jsstore.com.br`) na Vercel.
 
 ## Pagamento online no futuro
 
@@ -83,3 +90,9 @@ A loja pode ser instalada como app, com ícone na tela inicial, abrindo em tela 
 - O painel (`/admin`) também pode ser instalado separado, como "JS Painel".
 
 `sw.js` busca páginas, CSS e JS sempre na internet primeiro, então cada deploy aparece na hora. Só as fotos e fontes ficam guardadas no aparelho. Para forçar a limpeza dessas cópias, mude `VERSION` em `sw.js`.
+
+## Obrigações legais
+
+- **Dados da empresa** (Configurações → Dados da empresa): nome/razão social, CNPJ, endereço e e-mail aparecem no rodapé e nas páginas legais, como pede o Decreto 7.962/2013.
+- **/trocas** e **/privacidade**: textos-modelo baseados no CDC e na LGPD, preenchidos com os dados da empresa. Peça para o contador ou advogado revisar.
+- Sem o WhatsApp da loja cadastrado, a finalização de pedidos fica travada (para nenhum pedido ir para um número errado).

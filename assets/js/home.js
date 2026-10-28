@@ -1,7 +1,17 @@
 import { listProducts, stockTotal, finalPrice, listFeedbacks, submitFeedback, cleanInstagram, FEEDBACK_MAX_FOTOS } from "./data.js";
-import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, mapPin, modal, closeModal, toast, $, $$, esc, brl, icon, waIcon } from "./ui.js";
+import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, mapPin, setMeta, modal, closeModal, toast, $, $$, esc, brl, icon, waIcon } from "./ui.js";
 
 const cfg = await initPage("/");
+
+// dados da loja para o Google
+setMeta({ jsonld: {
+  "@context": "https://schema.org", "@type": "ClothingStore", name: "JS STORE", alternateName: "JS STORE Moda Feminina",
+  url: location.origin + "/", logo: location.origin + "/assets/img/icon-512.png", image: location.origin + "/assets/img/og.jpg",
+  description: "Moda feminina com curadoria: vestidos, blusas, calças, saias, conjuntos e blazers.",
+  ...(cfg.razao_social ? { legalName: cfg.razao_social } : {}), ...(cfg.cnpj ? { taxID: cfg.cnpj } : {}),
+  ...(cfg.endereco ? { address: cfg.endereco } : {}), ...(cfg.whatsapp ? { telephone: "+" + String(cfg.whatsapp).replace(/\D/g, "") } : {}),
+  sameAs: cfg.instagram ? ["https://instagram.com/" + String(cfg.instagram).replace(/^@/, "")] : undefined,
+} });
 
 // textos editáveis pelo painel
 if (cfg.hero_titulo) {
@@ -164,7 +174,7 @@ $("#fb-open").addEventListener("click", () => {
         <div class="fb-pick" id="fpick">
           <label class="fb-add" id="fadd">${icon("plus")}<span>Adicionar foto</span><input type="file" id="ffile" accept="image/*" multiple hidden></label>
         </div>
-        <span class="hint">Seu @ e suas fotos aparecem junto do seu feedback no site, se a loja aprovar.</span>
+        <span class="hint">Seu nome, cidade, @ e fotos aparecem junto do seu feedback no site, se a loja aprovar. Veja a <a class="link" href="/privacidade" target="_blank">Política de Privacidade</a>.</span>
       </div>
       <input type="text" id="fhp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
       <button class="btn btn-gold btn-block" id="fsend">Enviar feedback</button>
