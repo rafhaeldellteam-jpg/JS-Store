@@ -1,0 +1,10 @@
+{
+  "name": "JS STORE · Painel",
+  "short_name": "JS Painel",
+  "start_url": "/admin/",
+  "scope": "/admin/",
+  "display": "standalone",
+  "background_color": "#fff8f7",
+  "theme_color": "#2a1a1c",
+  "icons": [{ "src": "/assets/img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }]
+}
