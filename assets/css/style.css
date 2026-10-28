@@ -744,3 +744,124 @@ img.logo-d { display: none !important; }
 @media (max-width: 520px) { .row2 { grid-template-columns: 1fr; } }
 .hint { font-size: 12.5px; color: var(--ink-3); line-height: 1.45; }
 .field > .hint { display: block; margin-top: 2px; }
+
+/* =============================================================
+   Celular e iPhone: áreas seguras (notch, barra inferior) e toque
+   ============================================================= */
+:root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px); }
+body { padding-left: var(--sal); padding-right: var(--sar); }
+/* app instalado no iPhone: o conteúdo começa abaixo do relógio/bateria */
+.is-app body::before, html.is-app body::before { content: ""; position: fixed; inset: 0 0 auto 0; height: var(--sat); background: var(--blush-50); z-index: 70; }
+html.is-app body { padding-top: var(--sat); }
+html.is-app .header { top: var(--sat); }
+html.is-app .drawer, html.is-app .mnav { padding-top: var(--sat); }
+.drawer-foot { padding-bottom: calc(22px + var(--sab)); }
+.drawer, .mnav { height: 100dvh; overscroll-behavior: contain; }
+.drawer-body, .modal-box { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.social-float { bottom: calc(20px + var(--sab)); right: calc(20px + var(--sar)); transition: bottom .45s var(--ease); }
+.toasts { bottom: calc(24px + var(--sab)); }
+.mnav { padding-bottom: calc(24px + var(--sab)); }
+.mnav-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding-bottom: 8px; }
+.icon-btn { min-width: 44px; min-height: 44px; }
+img { -webkit-user-drag: none; }
+.marquee { will-change: transform; }
+
+/* janelas viram "folha" que sobe de baixo no celular */
+@media (max-width: 640px) {
+  .modal { place-items: end center; padding: 0; }
+  .modal-box { width: 100%; max-height: calc(100dvh - 40px - var(--sat)); border-radius: 26px 26px 0 0; padding: 26px 20px calc(24px + var(--sab)); transform: translateY(100%); opacity: 1; transition: transform .5s var(--ease); }
+  .modal-box::before { content: ""; position: absolute; top: 8px; left: 50%; translate: -50% 0; width: 42px; height: 5px; border-radius: 3px; background: var(--line); }
+  .modal.open .modal-box { transform: none; }
+  .modal-box h3 { font-size: 26px; padding-right: 40px; }
+  .lb-box { padding: 22px 12px calc(16px + var(--sab)); }
+  .drawer { width: 100%; }
+  .toasts { width: calc(100% - 24px); bottom: calc(14px + var(--sab)); }
+  .toast { font-size: 14px; padding: 12px 14px; }
+  .social-float { bottom: calc(14px + var(--sab)); right: calc(14px + var(--sar)); }
+  body.has-buybar .social-float { bottom: calc(92px + var(--sab)); }
+  /* cabeçalho compacto para caber até no iPhone SE */
+  .header-in { grid-template-columns: auto 1fr auto; gap: 6px; }
+  .brand { justify-self: center; gap: 6px; }
+  .actions { gap: 0; }
+  .actions .icon-btn, .menu-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+  .topbar { font-size: 11px; }
+  .marquee span { padding: 8px 18px; gap: 18px; }
+  .hero h1 { font-size: clamp(40px, 11vw, 52px); }
+  .hero p { font-size: 16.5px; }
+  .hero-stats b { font-size: 28px; }
+  .section-head h2 { font-size: clamp(30px, 8.5vw, 40px); }
+  .promo h2 { font-size: clamp(32px, 9vw, 42px); }
+  .countdown { gap: 8px; }
+  .countdown div { padding: 14px 4px; border-radius: 14px; }
+  .pdp-info h1 { font-size: clamp(30px, 8.5vw, 38px); }
+  .buy-row { grid-template-columns: auto 1fr auto; }
+  .buy-row .btn { padding: 14px 16px; font-size: 13px; }
+  .card-title { font-size: 17px; }
+  .shop-head { padding: 28px 0 18px; }
+  .toolbar .left { width: 100%; }
+  .pill-select { flex: 1 1 auto; min-width: 0; }
+}
+@media (max-width: 374px) {
+  .brand b { font-size: 17px; letter-spacing: .05em; }
+  .brand img { width: 30px; }
+  #search-btn { display: none; }            /* a busca fica no menu */
+  .grid { gap: 18px 10px; }
+  .price b { font-size: 14.5px; }
+  .hero-stats { gap: 16px; }
+}
+
+/* barra fixa de compra (página do produto, celular) */
+.buy-bar { display: none; }
+@media (max-width: 860px) {
+  .buy-bar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 48; align-items: center; justify-content: space-between; gap: 12px; padding: 10px calc(14px + var(--sar)) calc(10px + var(--sab)) calc(16px + var(--sal)); background: var(--header-bg); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-top: 1px solid var(--line); transform: translateY(110%); transition: transform .5s var(--ease); }
+  .buy-bar.show { transform: none; }
+  .buy-bar div { min-width: 0; }
+  .buy-bar small { display: block; font-size: 12px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; }
+  .buy-bar b { font-size: 18px; }
+  .buy-bar .btn { padding: 13px 20px; }
+}
+
+/* instalar app */
+.install-card { display: flex; align-items: center; gap: 14px; width: 100%; max-width: 520px; margin: 30px auto 0; padding: 14px 18px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .05); color: #fff; text-align: left; transition: background .3s, transform .45s var(--ease); }
+.install-card:hover { background: rgba(255, 255, 255, .09); }
+.install-card img { border-radius: 12px; flex: 0 0 auto; }
+.install-card span { flex: 1; }
+.install-card b { display: block; font-weight: 600; }
+.install-card small { color: var(--blush-300); font-size: 13px; }
+.install-card > svg { width: 22px; height: 22px; color: var(--blush-300); }
+.install-bar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + var(--sab)); z-index: 95; display: flex; align-items: center; gap: 10px; padding: 10px 8px 10px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); transform: translateY(140%); transition: transform .6s var(--ease); }
+.install-bar.open { transform: none; }
+.install-bar img { border-radius: 11px; flex: 0 0 auto; }
+.install-bar span { flex: 1; min-width: 0; }
+.install-bar b { display: block; font-size: 14.5px; }
+.install-bar small { color: var(--ink-3); font-size: 12.5px; }
+.install-bar .btn { padding: 10px 16px; }
+.ios-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.ios-steps li { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 16px; background: var(--blush-100); font-size: 15px; }
+.st-ic { width: 42px; height: 42px; border-radius: 12px; background: var(--surface); display: grid; place-items: center; color: #2f7cf6; flex: 0 0 auto; }
+.st-ic svg { width: 22px; height: 22px; }
+.st-ic img { border-radius: 8px; }
+
+/* =============================================================
+   Botão de localização em destaque (alfinete colorido)
+   ============================================================= */
+.map-pin { width: 1em; height: 1em; display: block; }
+.sf-map { background: #fff !important; border: 1px solid rgba(0, 0, 0, .06) !important; overflow: hidden; }
+.sf-map::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background:
+  linear-gradient(28deg, transparent 46%, rgba(120, 170, 255, .28) 47%, rgba(120, 170, 255, .28) 53%, transparent 54%),
+  linear-gradient(-62deg, transparent 47%, rgba(255, 196, 90, .35) 48%, rgba(255, 196, 90, .35) 52%, transparent 53%),
+  radial-gradient(circle at 30% 75%, rgba(110, 200, 140, .3) 0 18%, transparent 19%); z-index: 0; }
+.sf-map .map-pin { position: relative; z-index: 1; width: 30px; height: 30px; filter: drop-shadow(0 2px 3px rgba(215, 38, 61, .35)); animation: pinBob 3.2s var(--ease-io) infinite; }
+@keyframes pinBob { 0%, 70%, 100% { transform: translateY(0); } 80% { transform: translateY(-4px); } 90% { transform: translateY(0); } }
+.contact-list .ci.map { background: #fff !important; }
+.contact-list .ci.map .map-pin { width: 22px; height: 22px; }
+.contact-card.map .cc-ic { background: #fff !important; border: 1px solid var(--line); }
+.contact-card.map .cc-ic .map-pin { width: 30px; height: 30px; }
+.contact-card.map:hover .cc-ic { background: #fff !important; }
+@media (max-width: 640px) { .sf-map .map-pin { width: 27px; height: 27px; } }
+@media (prefers-reduced-motion: reduce) { .sf-map .map-pin { animation: none; } }
+.mnav-search { position: relative; margin-bottom: 8px; }
+.mnav-search .input { padding-left: 44px; border-radius: 999px; }
+.mnav-search svg { position: absolute; left: 16px; top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--ink-3); pointer-events: none; }
+img.is-error { opacity: 0 !important; }
+.card-media:has(img.is-error), .main-img:has(img.is-error), .hero-photo:has(img.is-error) { animation: none; background: var(--blush-100) url("/assets/img/butterfly.webp") center / 38% no-repeat; }

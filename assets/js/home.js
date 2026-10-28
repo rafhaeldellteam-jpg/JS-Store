@@ -1,5 +1,5 @@
 import { listProducts, stockTotal, finalPrice, DEMO_HERO, listFeedbacks, submitFeedback, cleanInstagram, FEEDBACK_MAX_FOTOS } from "./data.js";
-import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, modal, closeModal, toast, $, $$, esc, brl, icon, waIcon } from "./ui.js";
+import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, mapPin, modal, closeModal, toast, $, $$, esc, brl, icon, waIcon } from "./ui.js";
 
 const cfg = await initPage("/");
 
@@ -23,7 +23,7 @@ const L = contactLinks(cfg);
 const cards = [
   L.wa() && `<a class="contact-card wa reveal" href="${L.wa("Olá! Vim pelo site da JS STORE.")}" target="_blank" rel="noopener"><span class="cc-ic">${waIcon}</span><b>WhatsApp</b><small>Atendimento e pedidos</small><span class="cc-go">${icon("arrow")}</span></a>`,
   L.ig && `<a class="contact-card ig reveal" href="${L.ig}" target="_blank" rel="noopener"><span class="cc-ic">${icon("insta")}</span><b>Instagram</b><small>@${esc(L.igUser)}</small><span class="cc-go">${icon("arrow")}</span></a>`,
-  L.maps && `<a class="contact-card map reveal" href="${L.maps}" target="_blank" rel="noopener"><span class="cc-ic">${icon("pin")}</span><b>Como chegar</b><small>${esc(cfg.endereco || "Ver no Google Maps")}</small><span class="cc-go">${icon("arrow")}</span></a>`,
+  L.maps && `<a class="contact-card map reveal" href="${L.maps}" target="_blank" rel="noopener"><span class="cc-ic">${mapPin()}</span><b>Como chegar</b><small>${esc(cfg.endereco || "Ver no Google Maps")}</small><span class="cc-go">${icon("arrow")}</span></a>`,
   cfg.grupo_vip && `<a class="contact-card vip reveal" href="${esc(cfg.grupo_vip)}" target="_blank" rel="noopener"><span class="cc-ic">${icon("bell")}</span><b>Grupo VIP</b><small>Novidades em primeira mão</small><span class="cc-go">${icon("arrow")}</span></a>`,
 ].filter(Boolean);
 $("#community-btns").innerHTML = cards.join("");

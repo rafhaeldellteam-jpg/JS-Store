@@ -74,6 +74,22 @@ function render() {
     if (cart.add(p, sel, qty)) setTimeout(() => openDrawer("cart"), 450);
   });
   $("#fav").onclick = (e) => { const on = favs.toggle(p); e.currentTarget.classList.toggle("on", on); };
+
+  // celular: barra fixa de compra quando o botão principal sai da tela
+  if (total && $("#add")) {
+    const bar = document.createElement("div");
+    bar.className = "buy-bar";
+    bar.innerHTML = `<div><small>${esc(p.nome)}</small><b>${brl(fp)}</b></div><button class="btn btn-gold" id="add2">${icon("bag")} Comprar</button>`;
+    document.body.append(bar);
+    bar.querySelector("#add2").onclick = () => {
+      if (!sel) { $("#sizes").scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => $("#add").click(), 450); return; }
+      $("#add").click();
+    };
+    new IntersectionObserver(([e]) => {
+      const show = !e.isIntersecting && e.boundingClientRect.top < 0;
+      bar.classList.toggle("show", show); document.body.classList.toggle("has-buybar", show);
+    }).observe($(".buy-row"));
+  }
   $("#ask")?.addEventListener("click", (e) => { e.currentTarget.href = waLink(cfg.whatsapp, `Oi! Tenho uma dúvida sobre "${p.nome}"${sel ? ` no tamanho ${sel}` : ""}: ${location.href}`); });
   $("[data-sizeguide-btn]").onclick = sizeGuide;
   $("#share").onclick = async () => {

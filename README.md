@@ -74,3 +74,12 @@ vercel.json            URLs limpas e cabeçalhos
 ## Fotos de teste
 
 As peças de exemplo do modo demonstração usam fotos do [Unsplash](https://unsplash.com) (licença gratuita, uso comercial permitido), carregadas direto do Unsplash. Quando a loja estiver no Supabase, a cliente cadastra as fotos das próprias peças pelo painel e essas fotos de teste deixam de aparecer.
+
+## App no celular (PWA)
+
+A loja pode ser instalada como app, com ícone na tela inicial, abrindo em tela cheia e funcionando sem internet (mostra o que já foi visto).
+- **iPhone:** Safari → Compartilhar → *Adicionar à Tela de Início* (o site mostra esse passo a passo no menu → *Instalar app*).
+- **Android:** o botão *Instalar app* aparece no menu e no rodapé.
+- O painel (`/admin`) também pode ser instalado separado, como "JS Painel".
+
+`sw.js` busca páginas, CSS e JS sempre na internet primeiro, então cada deploy aparece na hora. Só as fotos e fontes ficam guardadas no aparelho. Para forçar a limpeza dessas cópias, mude `VERSION` em `sw.js`.

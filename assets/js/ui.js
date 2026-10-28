@@ -33,6 +33,9 @@ const P = {
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   arrow: '<path d="M5 12h14M13 5l7 7-7 7"/>',
   plus: '<path d="M5 12h14M12 5v14"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  shareIos: '<path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M8 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"/>',
+  plusSquare: '<rect width="18" height="18" x="3" y="3" rx="3"/><path d="M8 12h8M12 8v8"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   star: '<path d="M11.52 2.3a.53.53 0 0 1 .95 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.01a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .3-.9l5.16-.76a2.12 2.12 0 0 0 1.6-1.16z"/>',
@@ -59,7 +62,7 @@ export function currentTheme() {
 }
 export function toggleTheme(ev) {
   const next = currentTheme() === "dark" ? "light" : "dark";
-  const apply = () => { document.documentElement.dataset.theme = next; try { localStorage.setItem(THEME_KEY, next); } catch {} };
+  const apply = () => { document.documentElement.dataset.theme = next; try { localStorage.setItem(THEME_KEY, next); } catch {} syncThemeColor(); };
   const root = document.documentElement;
   if (ev && ev.clientX != null) { root.style.setProperty("--tx", ev.clientX + "px"); root.style.setProperty("--ty", ev.clientY + "px"); }
   if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -67,6 +70,23 @@ export function toggleTheme(ev) {
     document.startViewTransition(apply).finished.finally(() => root.classList.remove("theme-switching"));
   } else apply();
 }
+/** Alfinete de localização colorido (desenho próprio da loja). */
+let _mp = 0;
+export function mapPin(cls = "map-pin") {
+  const id = "mpg" + ++_mp;
+  return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a6e"/><stop offset="1" stop-color="#d7263d"/></linearGradient></defs>
+    <ellipse cx="12" cy="21.6" rx="3.6" ry="1.1" fill="#000" opacity=".16"/>
+    <path d="M12 21.2s-6.8-6-6.8-11.6a6.8 6.8 0 0 1 13.6 0c0 5.6-6.8 11.6-6.8 11.6z" fill="url(#${id})"/>
+    <path d="M8.2 6.4a5 5 0 0 1 4.4-2.6" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.1" stroke-linecap="round"/>
+    <circle cx="12" cy="9.6" r="2.7" fill="#fff"/></svg>`;
+}
+
+// cor da barra do navegador/iPhone acompanha o tema
+export function syncThemeColor() {
+  const c = currentTheme() === "dark" ? "#161012" : "#fff8f7";
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", c));
+}
+
 export const themeIcons = () => `${icon("moon", "i-moon")}${icon("sun", "i-sun")}`;
 
 export const waIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.12-.27-.2-.57-.35M12.05 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37A9.86 9.86 0 0 1 2.16 12C2.16 6.55 6.6 2.12 12.06 2.12c2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.89 7c0 5.45-4.44 9.89-9.89 9.89m8.41-18.3A11.81 11.81 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9 0-3.18-1.24-6.16-3.48-8.41"/></svg>';
@@ -88,6 +108,12 @@ export function contactLinks(cfg = {}) {
   };
 }
 const PLACEHOLDER = "/assets/img/butterfly.webp";
+/** srcset para fotos do Unsplash: o celular baixa versões menores. */
+export function srcsetOf(url) {
+  if (!/images\.unsplash\.com/.test(url || "")) return "";
+  const at = (w) => url.replace(/([?&])w=\d+/, `$1w=${w}`).replace(/([?&])h=\d+/, `$1h=${Math.round(w * 1.25)}`) + ` ${w}w`;
+  return ` srcset="${[360, 540, 800].map(at).join(", ")}" sizes="(max-width: 640px) 62vw, (max-width: 1024px) 33vw, 25vw"`;
+}
 // Crédito do desenvolvedor (rodapé)
 const DEV_WA = "https://wa.me/5511913347390?text=" + encodeURIComponent("Olá, gostaria de um orçamento para criação de site!");
 export const imgOf = (p, i = 0) => (p.imagens && p.imagens[i]) || PLACEHOLDER;
@@ -102,7 +128,7 @@ export const state = { config: null, products: [] };
 
 // fotos aparecem suavemente quando carregam (vale para a loja e o painel)
 document.addEventListener("load", (e) => { if (e.target.tagName === "IMG") e.target.classList.add("is-loaded"); }, true);
-document.addEventListener("error", (e) => { if (e.target.tagName === "IMG") e.target.classList.add("is-loaded"); }, true);
+document.addEventListener("error", (e) => { if (e.target.tagName === "IMG") e.target.classList.add("is-error"); }, true);
 
 // ---------- carrinho ----------
 export const cart = {
@@ -271,7 +297,7 @@ export function productCard(p, cfg = state.config || {}) {
   const url = `/produto?p=${encodeURIComponent(p.slug)}`;
   return `<article class="card reveal" data-id="${esc(p.id)}">
     <div class="card-media">
-      <a href="${url}" aria-label="${esc(p.nome)}"><img src="${esc(imgOf(p))}" alt="${esc(p.nome)}" loading="lazy">${p.imagens?.[1] ? `<img class="alt" src="${esc(p.imagens[1])}" alt="" loading="lazy">` : ""}</a>
+      <a href="${url}" aria-label="${esc(p.nome)}"><img src="${esc(imgOf(p))}"${srcsetOf(imgOf(p))} alt="${esc(p.nome)}" loading="lazy" decoding="async">${p.imagens?.[1] ? `<img class="alt" src="${esc(p.imagens[1])}"${srcsetOf(p.imagens[1])} alt="" loading="lazy" decoding="async">` : ""}</a>
       <div class="tags">${tags.join("")}</div>
       <button class="fav ${favs.has(p.id) ? "on" : ""}" data-fav="${esc(p.id)}" aria-label="Favoritar">${icon("heart")}</button>
       ${total ? `<div class="quick"><p>Adicionar rápido</p><div class="sizes">${(p.tamanhos || []).map((t) => `<button class="size" data-quick="${esc(p.id)}" data-size="${esc(t.t)}" ${t.q > 0 ? "" : "disabled"}>${esc(t.t)}</button>`).join("")}</div></div>` : ""}
@@ -316,7 +342,7 @@ function layout(cfg, active) {
     </div></div>
     <div class="search-bar" id="search-bar"><form class="wrap" action="/loja"><input class="input" name="q" placeholder="O que você procura? Ex.: vestido, blazer..." autocomplete="off"><button class="btn btn-sm">Buscar</button></form></div>
   </header>
-  <nav class="mnav" id="mnav">${brand}${links.map(([h, t]) => `<a href="${h}">${t}</a>`).join("")}<button class="btn btn-ghost btn-sm theme-btn" data-theme-toggle style="margin-top:auto;align-self:flex-start">${themeIcons()} Claro / escuro</button><a href="/admin/" style="font-size:16px;font-family:var(--sans);border:0;color:var(--ink-3)">Área da loja</a></nav>`;
+  <nav class="mnav" id="mnav">${brand}<form class="mnav-search" action="/loja" role="search"><input class="input" name="q" type="search" placeholder="Buscar peças" enterkeyhint="search" autocomplete="off">${icon("search")}</form>${links.map(([h, t]) => `<a href="${h}">${t}</a>`).join("")}<div class="mnav-foot"><button class="btn btn-gold btn-sm hidden" data-install>${icon("download")} Instalar app</button><button class="btn btn-ghost btn-sm theme-btn" data-theme-toggle>${themeIcons()} Claro / escuro</button></div><a href="/admin/" style="font-size:16px;font-family:var(--sans);border:0;color:var(--ink-3)">Área da loja</a></nav>`;
 
   const L = contactLinks(cfg);
   const footer = `
@@ -329,10 +355,11 @@ function layout(cfg, active) {
         <div class="contact-list">
           ${L.wa() ? `<a href="${L.wa()}" target="_blank" rel="noopener"><span class="ci wa">${waIcon}</span>WhatsApp</a>` : ""}
           ${L.ig ? `<a href="${L.ig}" target="_blank" rel="noopener"><span class="ci ig">${icon("insta")}</span>@${esc(L.igUser)}</a>` : ""}
-          ${L.maps ? `<a href="${L.maps}" target="_blank" rel="noopener"><span class="ci map">${icon("pin")}</span>${esc(cfg.endereco || "Como chegar")}</a>` : ""}
+          ${L.maps ? `<a href="${L.maps}" target="_blank" rel="noopener"><span class="ci map">${mapPin()}</span>${esc(cfg.endereco || "Como chegar")}</a>` : ""}
           ${cfg.grupo_vip ? `<a href="${esc(cfg.grupo_vip)}" target="_blank" rel="noopener"><span class="ci">${icon("bell")}</span>Grupo VIP</a>` : ""}
         </div></div>
     </div>
+    <button class="install-card hidden" data-install><img src="/assets/img/icon-192.png" alt="" width="44" height="44"><span><b>Baixe o app da JS STORE</b><small>Acesso rápido direto da tela inicial do seu celular</small></span>${icon("download")}</button>
     <div class="footer-bottom"><span>© ${new Date().getFullYear()} JS STORE · Moda Feminina. Todos os direitos reservados.</span><div class="pay"><span>Pix</span><span>Cartão</span><span>Dinheiro</span></div></div>
     <div class="dev-credit">
       <span>Desenvolvido por</span>
@@ -340,7 +367,7 @@ function layout(cfg, active) {
     </div>
   </div></footer>
   <div class="social-float" aria-label="Fale com a JS STORE">
-    ${L.maps ? `<a class="sf sf-map" href="${L.maps}" target="_blank" rel="noopener" aria-label="Ver no Google Maps"><span class="sf-tip">Como chegar</span>${icon("pin")}</a>` : ""}
+    ${L.maps ? `<a class="sf sf-map" href="${L.maps}" target="_blank" rel="noopener" aria-label="Ver no Google Maps"><span class="sf-tip">Como chegar</span>${mapPin()}</a>` : ""}
     ${L.ig ? `<a class="sf sf-ig" href="${L.ig}" target="_blank" rel="noopener" aria-label="Instagram"><span class="sf-tip">Instagram</span>${icon("insta")}</a>` : ""}
     ${L.wa() ? `<a class="sf sf-wa" href="${L.wa()}" target="_blank" rel="noopener" aria-label="Falar no WhatsApp"><span class="sf-tip">Fale conosco</span>${waIcon}</a>` : ""}
   </div>
@@ -363,6 +390,8 @@ function bindGlobal() {
     else if (t.id === "search-btn") { const s = $("#search-bar"); s.classList.toggle("open"); if (s.classList.contains("open")) setTimeout(() => s.querySelector("input").focus(), 200); }
     else if (t.hasAttribute("data-close")) closeDrawers();
     else if (t.hasAttribute("data-theme-toggle")) toggleTheme(e);
+    else if (t.hasAttribute("data-install")) { e.preventDefault(); installApp(); }
+    else if (t.hasAttribute("data-install-close")) { hideInstallBar(true); }
     else if (t.hasAttribute("data-sizeguide")) { e.preventDefault(); sizeGuide(); }
     else if (t.dataset.q) { const idx = +t.dataset.q; cart.setQty(idx, cart.items()[idx].qtd + +t.dataset.d); }
     else if (t.dataset.rm) cart.setQty(+t.dataset.rm, 0);
@@ -417,5 +446,71 @@ export async function initPage(active) {
   layout(cfg, active);
   bindGlobal();
   renderCart(); renderFavs(); updateBadges(false);
+  syncThemeColor();
+  setupPWA();
   return cfg;
+}
+
+// =============================================================
+//  App instalável (PWA)
+// =============================================================
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let installEvt = null;
+
+export function registerSW() {
+  if (!("serviceWorker" in navigator)) return;
+  const ok = location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname);
+  if (!ok) return;
+  addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch((e) => console.warn("SW", e)));
+}
+
+function showInstall() {
+  if (isStandalone()) return;
+  $$("[data-install]").forEach((b) => b.classList.remove("hidden"));
+  maybeInstallBar();
+}
+
+function setupPWA() {
+  registerSW();
+  if (isStandalone()) { document.documentElement.classList.add("is-app"); return; }
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; showInstall(); });
+  addEventListener("appinstalled", () => { installEvt = null; $$("[data-install]").forEach((b) => b.classList.add("hidden")); hideInstallBar(true); toast("App instalado! Procure a borboleta na sua tela inicial.", { ic: "checkCircle" }); });
+  if (isIOS()) showInstall();
+}
+
+async function installApp() {
+  hideInstallBar(true);
+  if (installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; return; }
+  if (isIOS()) {
+    modal(`<h3>Instalar no iPhone</h3><p class="muted" style="margin:0 0 18px">Leva 10 segundos e a JS STORE fica na sua tela inicial, como um app.</p>
+      <ol class="ios-steps">
+        <li><span class="st-ic">${icon("shareIos")}</span><span>Toque em <b>Compartilhar</b> na barra do Safari.</span></li>
+        <li><span class="st-ic">${icon("plusSquare")}</span><span>Escolha <b>Adicionar à Tela de Início</b>.</span></li>
+        <li><span class="st-ic"><img src="/assets/img/icon-192.png" alt="" width="30" height="30"></span><span>Toque em <b>Adicionar</b>. Pronto!</span></li>
+      </ol>
+      <p class="hint" style="margin:14px 0 0">Se estiver em outro navegador, abra o site no Safari para instalar.</p>`);
+  } else {
+    toast("Abra o menu do navegador e escolha Instalar app ou Adicionar à tela inicial.", { ic: "download", ms: 6000 });
+  }
+}
+
+// cartão discreto no celular, no máximo a cada 14 dias
+function maybeInstallBar() {
+  if (!matchMedia("(max-width: 860px)").matches || document.getElementById("install-bar")) return;
+  let last = 0; try { last = +localStorage.getItem("jss_install_dismiss") || 0; } catch {}
+  if (Date.now() - last < 14 * 86400000) return;
+  setTimeout(() => {
+    if (isStandalone() || document.querySelector(".drawer.open, #modal")) return;
+    const bar = document.createElement("div");
+    bar.id = "install-bar"; bar.className = "install-bar";
+    bar.innerHTML = `<img src="/assets/img/icon-192.png" alt="" width="40" height="40"><span><b>JS STORE no seu celular</b><small>Instale o app, é grátis</small></span><button class="btn btn-gold btn-sm" data-install>Instalar</button><button class="icon-btn" data-install-close aria-label="Agora não">${icon("x")}</button>`;
+    document.body.append(bar);
+    requestAnimationFrame(() => bar.classList.add("open"));
+  }, 15000);
+}
+function hideInstallBar(remember) {
+  const bar = document.getElementById("install-bar");
+  if (remember) { try { localStorage.setItem("jss_install_dismiss", Date.now()); } catch {} }
+  if (bar) { bar.classList.remove("open"); setTimeout(() => bar.remove(), 400); }
 }

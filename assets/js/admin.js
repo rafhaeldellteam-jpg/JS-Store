@@ -3,7 +3,7 @@
 // =============================================================
 import * as db from "./data.js";
 import { SIZE_PRESETS, stockTotal, finalPrice, DEMO_MODE } from "./data.js";
-import { icon, brl, esc, toast, modal, closeModal, productCard, state, $, $$, waLink, butterflySvg, toggleTheme, themeIcons } from "./ui.js";
+import { icon, brl, esc, toast, modal, closeModal, productCard, state, $, $$, waLink, butterflySvg, toggleTheme, themeIcons, mapPin, registerSW, syncThemeColor } from "./ui.js";
 
 const I = {
   home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
@@ -44,6 +44,7 @@ const errMsg = (e) => (e && (e.message || e.error_description)) || "Algo deu err
 const imgOf = (p) => p.imagens?.[0] || "/assets/img/butterfly.webp";
 
 // ---------------- inicialização ----------------
+registerSW();
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-theme-toggle]"); if (!t) return;
   e.preventDefault(); toggleTheme(e);
@@ -568,7 +569,7 @@ function configView() {
     $("#cprev").innerHTML = `<span class="hint">Teste os botões:</span>
       ${wa ? `<a class="cp wa" href="${waLink(wa, "Teste do site JS STORE")}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
       ${ig ? `<a class="cp ig" href="https://instagram.com/${encodeURIComponent(ig)}" target="_blank" rel="noopener">Instagram</a>` : ""}
-      ${mapUrl ? `<a class="cp map" href="${mapUrl}" target="_blank" rel="noopener">${ic("pin")} Maps</a>` : ""}`;
+      ${mapUrl ? `<a class="cp map" href="${mapUrl}" target="_blank" rel="noopener">${mapPin()} Maps</a>` : ""}`;
   };
   ["wa", "ig", "end", "maps"].forEach((id) => $("#" + id).addEventListener("input", drawPrev)); drawPrev();
   $("#cf").addEventListener("input", () => (S.dirty = true));
