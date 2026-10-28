@@ -178,3 +178,15 @@ body.admin { background: #fbf4f3; }
   .row2 { grid-template-columns: 1fr; }
   .bar-row { grid-template-columns: 90px 1fr 34px; }
 }
+
+/* contato e foto do topo (configurações) */
+.contact-preview { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.contact-preview .cp { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; font-size: 13px; color: #fff; transition: transform .3s var(--ease); }
+.contact-preview .cp:hover { transform: translateY(-2px); }
+.contact-preview .cp svg { width: 15px; height: 15px; }
+.cp.wa { background: #25d366; } .cp.ig { background: var(--ig-grad); } .cp.map { background: var(--ink); }
+.hero-pick { display: flex; gap: 14px; align-items: center; }
+.hero-pick img { width: 92px; aspect-ratio: 4/5; object-fit: cover; border-radius: 46px 46px 12px 12px; background: var(--blush-100); transition: opacity .3s; }
+.star-ic svg { width: 13px; height: 13px; vertical-align: -2px; color: var(--rose-600); fill: currentColor; }
+.ok-line { display: inline-flex; gap: 6px; align-items: center; color: var(--ok); }
+.ok-line svg { width: 16px; height: 16px; }

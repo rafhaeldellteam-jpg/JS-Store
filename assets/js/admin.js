@@ -25,6 +25,9 @@ const I = {
   star: '<path d="M11.52 2.3a.53.53 0 0 1 .95 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.01a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .3-.9l5.16-.76a2.12 2.12 0 0 0 1.6-1.16z"/>',
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  pin: '<path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/>',
   store: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M2 7h20v3a2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0Z"/>',
 };
 const ic = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n] || ""}</svg>`;
@@ -148,7 +151,7 @@ function dashboard() {
   const maxV = top[0]?.vendidos || 1;
   const hello = now.getHours() < 12 ? "Bom dia" : now.getHours() < 18 ? "Boa tarde" : "Boa noite";
 
-  shell("inicio", `${hello}! 🦋`, now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }), `
+  shell("inicio", `${hello}!`, now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }), `
     <div class="kpis">
       <div class="kpi"><div class="ic">${ic("money")}</div><span>Vendas no mês</span><b>${brl(fat)}</b><small>${vendasMes.length} pedido(s) confirmados</small></div>
       <div class="kpi ${pend.length ? "alert" : ""}"><div class="ic">${ic("receipt")}</div><span>Pedidos pendentes</span><b>${pend.length}</b><small><a class="link" href="#pedidos">ver pedidos</a></small></div>
@@ -159,7 +162,7 @@ function dashboard() {
       <div>
         <div class="panel"><h3>Últimos pedidos <a class="link" href="#pedidos" style="font-weight:400;font-size:13px">ver todos</a></h3>
           ${O.slice(0, 6).map((o) => `<div class="list-row"><div class="grow"><b>${esc(o.codigo)} · ${esc(o.cliente_nome)}</b><small>${fmtDate(o.created_at)} · ${o.itens.length} item(ns)</small></div><span class="st ${o.status}">${STATUS[o.status]}</span><b style="min-width:90px;text-align:right">${brl(o.total)}</b></div>`).join("")
-            || `<p class="muted">Quando uma cliente finalizar pelo WhatsApp, o pedido aparece aqui. 💕</p>`}
+            || `<p class="muted">Quando uma cliente finalizar pelo WhatsApp, o pedido aparece aqui.</p>`}
         </div>
         <div class="panel" style="margin-top:18px"><h3>Mais vendidos</h3>
           ${top.length ? `<div class="bars">${top.map((p) => `<div class="bar-row"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.nome)}</span><div class="t"><i style="width:${(p.vendidos / maxV) * 100}%"></i></div><b>${p.vendidos}</b></div>`).join("")}</div>` : `<p class="muted">Ainda sem vendas confirmadas.</p>`}
@@ -175,12 +178,12 @@ function dashboard() {
         </div>
         <div class="panel" style="margin-top:18px"><h3><span style="display:flex;gap:8px;align-items:center">${ic("alert").replace("<svg", '<svg style="width:18px;color:var(--warn)"')} Estoque acabando</span></h3>
           ${low.slice(0, 8).map(({ p, t }) => `<div class="list-row"><img src="${esc(imgOf(p))}" alt=""><div class="grow"><b>${esc(p.nome)}</b><small>Tamanho ${esc(t.t)}</small></div><span class="chip-sz ${t.q ? "low" : "zero"}">${t.q ? "resta 1" : "esgotado"}</span></div>`).join("")
-            || `<p class="muted">Tudo certo com o estoque ✨</p>`}
+            || `<p class="muted"><span class="ok-line">${ic("check")} Tudo certo com o estoque</span></p>`}
           ${low.length ? `<a class="btn btn-ghost btn-sm" style="margin-top:12px" href="#estoque">Repor estoque</a>` : ""}
         </div>
       </div>
     </div>`, `<a class="btn btn-gold btn-sm" href="#produto/novo">${ic("plus")} Novo produto</a>`);
-  $("#copy-link").onclick = async () => { await navigator.clipboard?.writeText(location.origin); toast("Link copiado! Cole na bio do Instagram 💕"); };
+  $("#copy-link").onclick = async () => { await navigator.clipboard?.writeText(location.origin); toast("Link copiado! Cole na bio do Instagram.", { ic: "link" }); };
 }
 
 // ---------------- produtos ----------------
@@ -200,7 +203,7 @@ function productsView() {
     const list = S.products.filter((p) => (!q || p.nome.toLowerCase().includes(q)) && (!c || p.categoria === c) &&
       (!s || (s === "ativo" && p.ativo) || (s === "inativo" && !p.ativo) || (s === "esgotado" && !stockTotal(p)) || (s === "promo" && finalPrice(p) < p.preco)));
     $("#tb").innerHTML = list.map((p) => `<tr data-id="${esc(p.id)}">
-      <td class="c-main"><div class="pcell"><img src="${esc(imgOf(p))}" alt=""><div><b>${esc(p.nome)}</b><small>${esc(p.categoria)}${p.destaque ? " · ⭐ destaque" : ""}${p.novidade ? " · novo" : ""}</small></div></div></td>
+      <td class="c-main"><div class="pcell"><img src="${esc(imgOf(p))}" alt=""><div><b>${esc(p.nome)}</b><small>${esc(p.categoria)}${p.destaque ? ` · <span class="star-ic">${ic("star")}</span> destaque` : ""}${p.novidade ? " · novo" : ""}</small></div></div></td>
       <td>${finalPrice(p) < p.preco ? `<b>${brl(finalPrice(p))}</b> <s class="muted" style="font-size:12.5px">${brl(p.preco)}</s>` : brl(p.preco)}</td>
       <td class="hide-m">${(p.tamanhos || []).map((t) => `<span class="chip-sz ${t.q <= 0 ? "zero" : t.q <= 1 ? "low" : ""}">${esc(t.t)}: ${t.q}</span>`).join("") || '<span class="muted">—</span>'}</td>
       <td><label class="switch" title="Mostrar na loja"><input type="checkbox" data-toggle ${p.ativo ? "checked" : ""}><i></i></label></td>
@@ -228,7 +231,7 @@ function productsView() {
   $("#tb").addEventListener("change", async (e) => {
     if (!e.target.matches("[data-toggle]")) return;
     const p = S.products.find((x) => x.id === e.target.closest("tr").dataset.id);
-    try { await db.saveProduct({ id: p.id, nome: p.nome, slug: p.slug, preco: p.preco, preco_promo: p.preco_promo, ativo: e.target.checked }); p.ativo = e.target.checked; toast(p.ativo ? "Produto visível na loja ✨" : "Produto escondido da loja"); }
+    try { await db.saveProduct({ id: p.id, nome: p.nome, slug: p.slug, preco: p.preco, preco_promo: p.preco_promo, ativo: e.target.checked }); p.ativo = e.target.checked; toast(p.ativo ? "Produto visível na loja" : "Produto escondido da loja", { ic: p.ativo ? "check" : "alert" }); }
     catch (er) { e.target.checked = !e.target.checked; toast(errMsg(er), { err: true }); }
   });
 }
@@ -387,7 +390,7 @@ function productForm(id) {
     if (problems.length) { toast("Falta preencher " + problems.join(", ") + ".", { err: true }); return; }
     if (new Set(p.tamanhos.map((t) => t.t)).size !== p.tamanhos.length) { toast("Há tamanhos repetidos.", { err: true }); return; }
     if (p.preco_promo !== "" && p.preco_promo >= p.preco) p.preco_promo = "";
-    if (!p.imagens.length && !confirm("Salvar sem foto? Produtos com foto vendem muito mais 😉")) return;
+    if (!p.imagens.length && !confirm("Salvar sem foto? Produtos com foto vendem muito mais.")) return;
     const b = $("#save"); b.disabled = true; b.textContent = "Salvando...";
     try {
       const row = { ...p, preco_promo: p.preco_promo === "" ? null : p.preco_promo };
@@ -398,7 +401,7 @@ function productForm(id) {
       const full = { ...(orig || {}), ...row, ...(saved || {}) };
       if (orig) S.products[S.products.indexOf(orig)] = full; else S.products.unshift(full);
       S.dirty = false;
-      toast(orig ? "Alterações salvas ✨" : "Produto cadastrado! Já está na loja 🦋");
+      toast(orig ? "Alterações salvas" : "Produto cadastrado! Já está na loja.");
       location.hash = "#produtos";
     } catch (er) { toast(errMsg(er), { err: true, ms: 7000 }); b.disabled = false; b.textContent = "Salvar produto"; }
   };
@@ -443,7 +446,7 @@ function stockView() {
       catch (er) { toast(`${p.nome}: ${errMsg(er)}`, { err: true }); }
     }
     S.dirty = changed.size > 0;
-    if (ok) toast(`Estoque atualizado em ${ok} produto(s) ✓`);
+    if (ok) toast(`Estoque atualizado em ${ok} produto(s)`);
     b.textContent = "Salvar estoque"; draw();
   };
   draw();
@@ -470,7 +473,7 @@ function ordersView() {
         ${o.observacao ? `<div class="obs">${esc(o.observacao)}</div>` : ""}
         <div class="order-actions">
           ${next.map(([s, t]) => `<button class="btn btn-sm" data-st="${s}">${t}</button>`).join("")}
-          ${tel ? `<a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(tel55, `Oi, ${o.cliente_nome}! Aqui é da JS STORE 🦋 Sobre seu pedido ${o.codigo}:`)}">WhatsApp da cliente</a>` : ""}
+          ${tel ? `<a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="${waLink(tel55, `Oi, ${o.cliente_nome}! Aqui é da JS STORE. Sobre seu pedido ${o.codigo}:`)}">WhatsApp da cliente</a>` : ""}
           ${o.status !== "cancelado" ? `<button class="btn btn-ghost btn-sm" data-st="cancelado">Cancelar</button>` : `<button class="btn btn-ghost btn-sm" data-st="pendente">Reabrir</button><button class="icon-btn" data-delo title="Excluir">${ic("trash")}</button>`}
         </div></div>`;
     }).join("") || `<div class="panel" style="text-align:center"><p class="muted">Nenhum pedido ${filtro ? `com status "${STATUS[filtro]}"` : "ainda"}.</p></div>`;
@@ -488,7 +491,7 @@ function ordersView() {
         await db.setOrderStatus(o.id, s);
         S.products = await db.listProducts({ admin: true });
         o.status = s; draw();
-        toast(s === "confirmado" ? "Pedido confirmado — estoque atualizado ✓" : `Pedido ${STATUS[s].toLowerCase()}`);
+        toast(s === "confirmado" ? "Pedido confirmado e estoque atualizado" : `Pedido ${STATUS[s].toLowerCase()}`);
       } catch (er) { st.disabled = false; toast(errMsg(er), { err: true }); }
     }
     if (e.target.closest("[data-delo]") && confirm("Excluir este pedido do histórico?")) {
@@ -512,9 +515,15 @@ function configView() {
           <div class="field"><label for="ig">Instagram</label><input class="input" id="ig" value="${esc(c.instagram)}" placeholder="js_store"></div>
           <div class="field"><label for="vip">Link do grupo VIP</label><input class="input" id="vip" value="${esc(c.grupo_vip)}" placeholder="https://chat.whatsapp.com/..."></div>
         </div>
-        <div class="field"><label for="end">Endereço / região de atendimento</label><input class="input" id="end" value="${esc(c.endereco)}" placeholder="Ex.: São Paulo - SP · Entregas na região"></div>
+        <div class="field"><label for="end">Endereço da loja / região</label><input class="input" id="end" value="${esc(c.endereco)}" placeholder="Ex.: Rua das Flores, 120 - Centro, São Paulo - SP"><span class="hint">Aparece no rodapé e é usado no botão "Como chegar" (Google Maps).</span></div>
+        <div class="field"><label for="maps">Link do Google Maps <span class="hint">(opcional)</span></label><input class="input" id="maps" value="${esc(c.maps_url)}" placeholder="https://maps.app.goo.gl/..."><span class="hint">No Google Maps, abra a loja, toque em Compartilhar e cole o link aqui. Se ficar vazio, usamos o endereço acima.</span></div>
+        <div class="contact-preview" id="cprev"></div>
       </div>
       <div class="panel"><h3>Página inicial</h3>
+        <div class="field"><label>Foto de destaque do topo</label>
+          <div class="hero-pick"><img id="hero-img" src="${esc(c.hero_imagem || db.DEMO_HERO)}" alt=""><div>
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer">${ic("image")} Trocar foto<input type="file" id="hero-file" accept="image/*" hidden></label>
+            <p class="hint" style="margin:8px 0 0">Foto vertical fica melhor. Reduzimos o tamanho automaticamente.</p></div></div></div>
         <div class="field"><label for="ht">Título principal</label><input class="input" id="ht" maxlength="60" value="${esc(c.hero_titulo)}"></div>
         <div class="field"><label for="hs">Subtítulo</label><textarea class="textarea" id="hs" maxlength="200">${esc(c.hero_subtitulo)}</textarea></div>
         <div class="field"><label for="av">Faixa de avisos do topo <span class="hint">(um por linha)</span></label><textarea class="textarea" id="av">${esc((c.aviso_topo || []).join("\n"))}</textarea></div>
@@ -543,6 +552,23 @@ function configView() {
   $("#cat-in").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.value.trim()) { e.preventDefault(); cats.push(e.target.value.trim()); e.target.value = ""; drawCats(); S.dirty = true; } });
   $("#cats").addEventListener("click", (e) => { const b = e.target.closest("[data-rm]"); if (b) { cats.splice(+b.dataset.rm, 1); drawCats(); S.dirty = true; } });
   drawCats();
+  let heroImg = c.hero_imagem || "";
+  $("#hero-file").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    $("#hero-img").style.opacity = .4;
+    try { heroImg = await db.uploadImage(f); $("#hero-img").src = heroImg; S.dirty = true; toast("Foto carregada. Clique em Salvar para aplicar."); }
+    catch (er) { toast("Erro ao enviar foto: " + errMsg(er), { err: true }); }
+    $("#hero-img").style.opacity = 1; e.target.value = "";
+  };
+  const drawPrev = () => {
+    const wa = $("#wa").value.replace(/\D/g, ""), ig = $("#ig").value.trim().replace(/^@/, ""), end = $("#end").value.trim(), maps = $("#maps").value.trim();
+    const mapUrl = maps || (end ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("JS STORE " + end)}` : "");
+    $("#cprev").innerHTML = `<span class="hint">Teste os botões:</span>
+      ${wa ? `<a class="cp wa" href="${waLink(wa, "Teste do site JS STORE")}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+      ${ig ? `<a class="cp ig" href="https://instagram.com/${encodeURIComponent(ig)}" target="_blank" rel="noopener">Instagram</a>` : ""}
+      ${mapUrl ? `<a class="cp map" href="${mapUrl}" target="_blank" rel="noopener">${ic("pin")} Maps</a>` : ""}`;
+  };
+  ["wa", "ig", "end", "maps"].forEach((id) => $("#" + id).addEventListener("input", drawPrev)); drawPrev();
   $("#cf").addEventListener("input", () => (S.dirty = true));
   $("#chpw")?.addEventListener("click", changePasswordModal);
   $("#cf").onsubmit = async (e) => {
@@ -551,6 +577,7 @@ function configView() {
     if (wa.length < 12) { toast("Confira o WhatsApp: use 55 + DDD + número.", { err: true }); return; }
     const cfg = {
       whatsapp: wa, instagram: $("#ig").value.trim().replace(/^@/, ""), grupo_vip: $("#vip").value.trim(), endereco: $("#end").value.trim(),
+      maps_url: $("#maps").value.trim(), hero_imagem: heroImg,
       hero_titulo: $("#ht").value.trim(), hero_subtitulo: $("#hs").value.trim(),
       aviso_topo: $("#av").value.split("\n").map((s) => s.trim()).filter(Boolean),
       promo_titulo: $("#pt").value.trim(), promo_texto: $("#px").value.trim(),
@@ -559,7 +586,7 @@ function configView() {
       frete_gratis_acima: Math.max(0, Number($("#fg").value) || 0), categorias: cats,
     };
     const b = $("#save"); b.disabled = true; b.textContent = "Salvando...";
-    try { await db.saveConfig(cfg); Object.assign(S.config, cfg); S.dirty = false; toast("Configurações salvas ✨"); }
+    try { await db.saveConfig(cfg); Object.assign(S.config, cfg); S.dirty = false; toast("Configurações salvas"); }
     catch (er) { toast(errMsg(er), { err: true }); }
     b.disabled = false; b.textContent = "Salvar configurações";
   };
@@ -572,7 +599,7 @@ function changePasswordModal() {
     onOpen(m) {
       m.querySelector("#pwf").onsubmit = async (e) => {
         e.preventDefault();
-        try { await db.updatePassword(m.querySelector("#np").value); closeModal(); toast("Senha alterada ✓"); } catch (er) { toast(errMsg(er), { err: true }); }
+        try { await db.updatePassword(m.querySelector("#np").value); closeModal(); toast("Senha alterada"); } catch (er) { toast(errMsg(er), { err: true }); }
       };
     },
   });

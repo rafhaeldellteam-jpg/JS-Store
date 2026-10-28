@@ -54,8 +54,14 @@ create table if not exists public.config (
   pix_desconto integer default 0,
   grupo_vip text default '',
   endereco text default '',
+  maps_url text default '',
+  hero_imagem text default '',
   categorias text[] default '{Vestidos,Blusas,Calças,Saias,Conjuntos,Blazers}'
 );
+-- colunas novas (para quem já rodou uma versão anterior deste arquivo)
+alter table public.config add column if not exists maps_url text default '';
+alter table public.config add column if not exists hero_imagem text default '';
+
 insert into public.config (id, aviso_topo, hero_titulo, hero_subtitulo, promo_titulo, promo_texto, frete_gratis_acima, pix_desconto)
 values (1,
   '{"Frete grátis acima de R$ 299","5% de desconto no Pix","Troca fácil em até 7 dias","Novidades toda semana"}',

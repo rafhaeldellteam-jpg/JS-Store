@@ -36,12 +36,12 @@ function render() {
       <div class="pdp-block">
         <h6>Tamanho <button type="button" data-sizeguide-btn>${"Guia de medidas"}</button></h6>
         <div class="sizes" id="sizes">${(p.tamanhos || []).map((t) => `<button class="size" data-s="${esc(t.t)}" ${t.q > 0 ? "" : "disabled"} aria-label="Tamanho ${esc(t.t)}${t.q > 0 ? "" : " esgotado"}">${esc(t.t)}</button>`).join("")}</div>
-        <div class="stock-note" id="stock-note">${total ? "Selecione um tamanho" : "Esta peça esgotou 😢"}</div>
+        <div class="stock-note" id="stock-note">${total ? "Selecione um tamanho" : `${icon("alert")} Esta peça esgotou`}</div>
         ${p.cores?.length ? `<p style="margin:14px 0 0;font-size:14px"><span class="muted">Cor:</span> ${esc(p.cores.join(", "))}</p>` : ""}
         <div class="buy-row">
           <div class="qty"><button id="q-minus" aria-label="Diminuir">−</button><span id="q">1</span><button id="q-plus" aria-label="Aumentar">+</button></div>
           ${total ? `<button class="btn btn-gold" id="add">${icon("bag")} Adicionar à sacola</button>`
-                  : `<a class="btn btn-wa" target="_blank" rel="noopener" href="${waLink(cfg.whatsapp, `Oi! A peça "${p.nome}" vai voltar ao estoque? Quero ser avisada 🦋`)}">${icon("bell")} Avise-me quando chegar</a>`}
+                  : `<a class="btn btn-wa" target="_blank" rel="noopener" href="${waLink(cfg.whatsapp, `Oi! A peça "${p.nome}" vai voltar ao estoque? Quero ser avisada.`)}">${icon("bell")} Avise-me quando chegar</a>`}
           <button class="fav ${favs.has(p.id) ? "on" : ""}" id="fav" aria-label="Favoritar">${icon("heart")}</button>
         </div>
         ${total ? `<a class="btn btn-ghost btn-block" style="margin-top:10px" id="ask" target="_blank" rel="noopener" href="#">${waIcon} Tirar dúvida no WhatsApp</a>` : ""}
@@ -64,13 +64,13 @@ function render() {
     sel = b.dataset.s; qty = 1; $("#q").textContent = 1;
     const q = p.tamanhos.find((t) => t.t === sel).q;
     note.className = "stock-note" + (q <= 2 ? " low" : "");
-    note.textContent = q <= 2 ? `Corre! Só ${q === 1 ? "1 unidade" : "2 unidades"} no ${sel}` : `Disponível no ${sel} ✓`;
+    note.innerHTML = q <= 2 ? `${icon("alert")} Corre! Só ${q === 1 ? "1 unidade" : "2 unidades"} no ${sel}` : `${icon("check")} Disponível no ${sel}`;
   });
   const max = () => (sel ? p.tamanhos.find((t) => t.t === sel).q : 1);
   $("#q-minus").onclick = () => { qty = Math.max(1, qty - 1); $("#q").textContent = qty; };
   $("#q-plus").onclick = () => { if (qty < max()) qty++; else toast(sel ? `Máximo disponível no ${sel}: ${max()}` : "Escolha o tamanho primeiro"); $("#q").textContent = qty; };
   $("#add")?.addEventListener("click", () => {
-    if (!sel) { note.className = "stock-note low"; note.textContent = "Escolha um tamanho para continuar 👆"; $("#sizes").animate([{ transform: "translateX(0)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "translateX(0)" }], { duration: 300 }); return; }
+    if (!sel) { note.className = "stock-note low"; note.innerHTML = `${icon("pointer")} Escolha um tamanho para continuar`; $("#sizes").animate([{ transform: "translateX(0)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "translateX(0)" }], { duration: 300 }); return; }
     if (cart.add(p, sel, qty)) setTimeout(() => openDrawer("cart"), 450);
   });
   $("#fav").onclick = (e) => { const on = favs.toggle(p); e.currentTarget.classList.toggle("on", on); };
@@ -79,7 +79,7 @@ function render() {
   $("#share").onclick = async () => {
     const data = { title: p.nome, text: `Olha essa peça da JS STORE: ${p.nome}`, url: location.href };
     if (navigator.share) { try { await navigator.share(data); } catch {} }
-    else { await navigator.clipboard?.writeText(location.href); toast("Link copiado! 💕"); }
+    else { await navigator.clipboard?.writeText(location.href); toast("Link copiado!", { ic: "link" }); }
   };
 
   // galeria + zoom

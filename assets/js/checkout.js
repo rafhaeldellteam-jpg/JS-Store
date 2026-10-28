@@ -22,13 +22,13 @@ export async function checkout(ctx) {
 }
 
 async function whatsappCheckout({ cfg, items, onDone }) {
-  const { modal, closeModal, toast, waIcon } = await import("./ui.js");
+  const { modal, closeModal, toast, waIcon, icon } = await import("./ui.js");
   const saved = (() => { try { return JSON.parse(localStorage.getItem("jss_cliente")) || {}; } catch { return {}; } })();
   const total = items.reduce((a, i) => a + i.preco * i.qtd, 0);
   const pix = Number(cfg.pix_desconto) || 0;
 
   modal(`
-    <h3>Quase lá! 🦋</h3>
+    <h3 class="h-ic"><img src="/assets/img/butterfly.webp" alt="" width="34"> Quase lá!</h3>
     <p class="muted" style="margin:0 0 18px">Preencha rapidinho e seu pedido vai prontinho para o WhatsApp da loja.</p>
     <form id="co-form">
       <div class="field"><label for="co-nome">Seu nome *</label><input class="input" id="co-nome" required maxlength="120" value="${escH(saved.nome || "")}" autocomplete="name"></div>
@@ -71,7 +71,7 @@ async function whatsappCheckout({ cfg, items, onDone }) {
         const lines = (ped.itens || []).map((i) => `• ${i.qtd}x ${i.nome} — Tam. ${i.tamanho} — ${fmt(i.preco * i.qtd)}`);
         const tot = Number(ped.total);
         const msg = [
-          `Olá, JS STORE! 🦋 Quero fazer um pedido.`,
+          `Olá, JS STORE! Quero fazer um pedido.`,
           ``, `*Pedido ${ped.codigo}*`, ...lines, ``,
           `*Total: ${fmt(tot)}*${pix && pag.startsWith("Pix") ? ` (no Pix: ${fmt(tot * (1 - pix / 100))})` : ""}`,
           ``, `Nome: ${nome}`, tel ? `WhatsApp: ${tel}` : "", `Entrega: ${entrega}${entrega === "Entrega" && end ? " — " + end : ""}`, `Pagamento: ${pag}`, obs ? `Obs.: ${obs}` : "",
@@ -80,7 +80,7 @@ async function whatsappCheckout({ cfg, items, onDone }) {
         if (win) win.location.href = url; else location.href = url;
         closeModal();
         onDone && onDone();
-        toast(`Pedido <b>${ped.codigo}</b> enviado! Finalize a conversa no WhatsApp 💕`, { ms: 7000 });
+        toast(`Pedido <b>${ped.codigo}</b> enviado! Finalize a conversa no WhatsApp.`, { ms: 7000, ic: "checkCircle" });
       });
     },
   });

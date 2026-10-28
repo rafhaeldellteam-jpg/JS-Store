@@ -38,6 +38,8 @@ export const DEFAULT_CONFIG = {
   pix_desconto: 5,
   grupo_vip: "",
   endereco: "",
+  maps_url: "",
+  hero_imagem: "",
   categorias: ["Vestidos", "Blusas", "Calças", "Saias", "Conjuntos", "Blazers"],
 };
 
@@ -59,34 +61,46 @@ const LS = {
   set(k, v) { try { localStorage.setItem("jss_" + k, JSON.stringify(v)); } catch (e) { throw new Error("Sem espaço no navegador para salvar (modo demonstração)."); } },
 };
 
+// Fotos de teste: Unsplash (licença gratuita, uso comercial permitido)
+export const unsplash = (id, w = 800) =>
+  `https://images.unsplash.com/photo-${id}?w=${w}&h=${Math.round(w * 1.25)}&fit=crop&crop=faces,center&auto=format&q=75`;
+export const DEMO_HERO = unsplash("1609741873312-7ce5ae7c56b4", 1000);
+
 function demoSeed() {
   const now = Date.now();
-  const mk = (i, nome, cat, preco, promo, img, tam, flags = {}) => ({
+  const mk = (i, nome, cat, preco, promo, fotos, tam, flags = {}) => ({
     id: "demo-" + i, nome, slug: slugify(nome), categoria: cat, preco, preco_promo: promo,
-    descricao: "Peça da curadoria JS STORE. Tecido de toque macio, caimento impecável e acabamento delicado — perfeita do dia ao jantar.",
-    imagens: ["/assets/img/demo/" + img], tamanhos: tam, cores: flags.cores || [],
+    descricao: flags.desc || "Peça da curadoria JS STORE. Tecido de toque macio, caimento impecável e acabamento delicado: perfeita do dia ao jantar.",
+    imagens: fotos.map((f) => unsplash(f)), tamanhos: tam, cores: flags.cores || [],
     destaque: !!flags.destaque, novidade: !!flags.novidade, ativo: true, vendidos: flags.vendidos || 0,
     created_at: new Date(now - i * 86400000).toISOString(),
   });
   const L = (q) => ["PP", "P", "M", "G", "GG"].map((t, i) => ({ t, q: q[i] }));
+  const N = (q) => ["36", "38", "40", "42", "44"].map((t, i) => ({ t, q: q[i] }));
   return [
-    mk(1, "Vestido Midi Rosé", "Vestidos", 249.9, 199.9, "vestido.svg", L([1, 3, 4, 2, 0]), { destaque: true, novidade: true, vendidos: 18, cores: ["Rosé"] }),
-    mk(2, "Blusa Pérola Botões", "Blusas", 129.9, null, "blusa.svg", L([0, 2, 5, 3, 1]), { novidade: true, vendidos: 9, cores: ["Off-white"] }),
-    mk(3, "Calça Alfaiataria Cacau", "Calças", 219.9, null, "calca.svg", ["36", "38", "40", "42", "44"].map((t, i) => ({ t, q: [2, 4, 3, 1, 2][i] })), { destaque: true, vendidos: 14, cores: ["Cacau"] }),
-    mk(4, "Saia Plissada Vinho", "Saias", 159.9, 129.9, "saia.svg", L([2, 2, 1, 0, 0]), { novidade: true, vendidos: 6, cores: ["Vinho"] }),
-    mk(5, "Conjunto Lavanda Soft", "Conjuntos", 289.9, null, "conjunto.svg", L([0, 1, 2, 2, 1]), { destaque: true, vendidos: 11, cores: ["Lavanda"] }),
-    mk(6, "Blazer Areia Essencial", "Blazers", 329.9, 279.9, "blazer.svg", L([1, 2, 2, 1, 1]), { novidade: true, destaque: true, vendidos: 7, cores: ["Areia"] }),
+    mk(1, "Vestido Midi Rosé Alças", "Vestidos", 249.9, 199.9, ["1609533896512-68e72be46a33"], L([1, 3, 4, 2, 0]), { destaque: true, novidade: true, vendidos: 18, cores: ["Rosé"], desc: "Vestido midi com alças finas e busto estruturado. Tecido acetinado com leve brilho, forro interno e zíper invisível nas costas." }),
+    mk(2, "Top Ombro a Ombro Babados", "Blusas", 139.9, null, ["1763152608881-67c80e52d0fc"], L([0, 2, 3, 2, 1]), { novidade: true, vendidos: 9, cores: ["Rosa antigo"], desc: "Top tomara que caia com babados em camadas. Elástico de silicone no decote para não sair do lugar." }),
+    mk(3, "Calça Pantalona Bordô", "Calças", 229.9, null, ["1790384071619-de00d80547ac", "1790384070481-d4eefe6d509b"], N([2, 4, 3, 1, 2]), { destaque: true, vendidos: 14, cores: ["Bordô"], desc: "Pantalona de cintura alta com caimento fluido. Alonga a silhueta e combina com tudo, do tênis ao salto." }),
+    mk(4, "Saia Midi Off-white", "Saias", 159.9, 129.9, ["1762342676887-bf683bb21695", "1762343041573-aa2827852bc9"], L([2, 2, 1, 0, 0]), { novidade: true, vendidos: 6, cores: ["Off-white"], desc: "Saia midi evasê com cós de elástico embutido. Leve, com movimento, perfeita para os dias quentes." }),
+    mk(5, "Conjunto Rosé Alfaiataria", "Conjuntos", 319.9, null, ["1763971922545-2e5ed772ae43", "1763971922545-c0ffa1c09cc0"], L([0, 1, 2, 2, 1]), { destaque: true, vendidos: 11, cores: ["Rosé"], desc: "Conjunto de camisa e calça em alfaiataria leve. Use junto para um look marcante ou separado no dia a dia." }),
+    mk(6, "Terno Bege Essencial", "Blazers", 349.9, 299.9, ["1779406166699-662a041a12a9", "1779406167603-d0afe0a4cdd7"], L([1, 2, 2, 1, 1]), { novidade: true, destaque: true, vendidos: 7, cores: ["Bege"], desc: "Blazer de corte reto e calça combinando. Elegância atemporal para o trabalho e eventos." }),
+    mk(7, "Vestido Longo Romance", "Vestidos", 289.9, null, ["1609741873312-7ce5ae7c56b4"], L([1, 1, 2, 1, 0]), { vendidos: 5, cores: ["Rosa claro"], desc: "Vestido longo de tule com saia ampla. Ideal para festas, casamentos e ensaios." }),
+    mk(8, "Camisa Off-white Clássica", "Blusas", 149.9, null, ["1600973964462-0cf10488d440"], L([2, 3, 3, 2, 1]), { vendidos: 12, cores: ["Off-white"], desc: "Camisa de viscose com botões e mangas longas. Peça curinga que vai do jeans à alfaiataria." }),
+    mk(9, "Conjunto Floral Verão", "Conjuntos", 259.9, 219.9, ["1763818104121-7d63caa456f1"], L([0, 1, 1, 0, 0]), { novidade: true, vendidos: 4, cores: ["Estampado"], desc: "Conjunto estampado de blusa e calça em tecido leve. Fresquinho e cheio de personalidade." }),
+    mk(10, "Blazer Caramelo Oversized", "Blazers", 279.9, null, ["1590873802674-55bb8f947bc5"], L([1, 2, 1, 1, 0]), { vendidos: 8, cores: ["Caramelo"], desc: "Blazer de modelagem ampla com ombreiras suaves. Joga por cima de qualquer look e eleva na hora." }),
   ];
 }
+// "v2" = produtos de teste com fotos reais (substitui os antigos desenhos)
+const PK = "produtos_v2";
 function demoProducts() {
-  let p = LS.get("produtos", null);
-  if (!p) { p = demoSeed(); LS.set("produtos", p); }
+  let p = LS.get(PK, null);
+  if (!p) { p = demoSeed(); LS.set(PK, p); }
   return p;
 }
 function demoConfig() {
   const c = LS.get("config", null);
-  if (c) return { ...DEFAULT_CONFIG, ...c };
-  const d = { ...DEFAULT_CONFIG, promo_fim: new Date(Date.now() + 3 * 86400000).toISOString() };
+  if (c) return { ...DEFAULT_CONFIG, endereco: "São Paulo - SP", ...c };
+  const d = { ...DEFAULT_CONFIG, endereco: "São Paulo - SP", promo_fim: new Date(Date.now() + 3 * 86400000).toISOString() };
   LS.set("config", d);
   return d;
 }
@@ -148,7 +162,7 @@ export async function saveProduct(p) {
       const i = all.findIndex((x) => x.id === row.id);
       all[i] = { ...all[i], ...row };
     }
-    LS.set("produtos", all);
+    LS.set(PK, all);
     return row;
   }
   const c = await sb();
@@ -169,7 +183,7 @@ export async function saveProduct(p) {
 }
 
 export async function deleteProduct(id) {
-  if (DEMO_MODE) { LS.set("produtos", demoProducts().filter((p) => p.id !== id)); return; }
+  if (DEMO_MODE) { LS.set(PK, demoProducts().filter((p) => p.id !== id)); return; }
   const c = await sb();
   const { error } = await c.from("produtos").delete().eq("id", id);
   if (error) throw error;
@@ -243,7 +257,7 @@ export async function setOrderStatus(id, status) {
       const t = p.tamanhos.find((x) => x.t === it.tamanho); if (t) t.q = Math.max(0, t.q + sign * it.qtd);
       p.vendidos = Math.max(0, (p.vendidos || 0) - sign * it.qtd);
     }
-    o.status = status; LS.set("pedidos", pedidos); LS.set("produtos", prods);
+    o.status = status; LS.set("pedidos", pedidos); LS.set(PK, prods);
     return;
   }
   const c = await sb();
@@ -301,5 +315,5 @@ export async function onAuthChange(cb) {
   c.auth.onAuthStateChange((ev, session) => cb(ev, session));
 }
 export function resetDemo() {
-  ["produtos", "config", "pedidos"].forEach((k) => localStorage.removeItem("jss_" + k));
+  ["produtos", PK, "config", "pedidos"].forEach((k) => localStorage.removeItem("jss_" + k));
 }

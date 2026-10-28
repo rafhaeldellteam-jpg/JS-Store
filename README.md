@@ -1,4 +1,4 @@
-# JS STORE · Moda Feminina 🦋
+# JS STORE · Moda Feminina
 
 Loja virtual da JS STORE com vitrine, carrinho, pedidos pelo WhatsApp e **painel administrativo** para a dona da loja cadastrar roupas, fotos, tamanhos e estoque sozinha — pelo computador ou celular.
 
@@ -69,3 +69,7 @@ assets/img/            logo, borboleta, ícones, imagens de exemplo
 supabase/schema.sql    tabelas, segurança, funções de pedido e fotos
 vercel.json            URLs limpas e cabeçalhos
 ```
+
+## Fotos de teste
+
+As peças de exemplo do modo demonstração usam fotos do [Unsplash](https://unsplash.com) (licença gratuita, uso comercial permitido), carregadas direto do Unsplash. Quando a loja estiver no Supabase, a cliente cadastra as fotos das próprias peças pelo painel e essas fotos de teste deixam de aparecer.
