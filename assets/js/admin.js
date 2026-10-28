@@ -522,10 +522,6 @@ function configView() {
         <div class="contact-preview" id="cprev"></div>
       </div>
       <div class="panel"><h3>Página inicial</h3>
-        <div class="field"><label>Foto de destaque do topo</label>
-          <div class="hero-pick"><img id="hero-img" src="${esc(c.hero_imagem || db.DEMO_HERO)}" alt=""><div>
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer">${ic("image")} Trocar foto<input type="file" id="hero-file" accept="image/*" hidden></label>
-            <p class="hint" style="margin:8px 0 0">Foto vertical fica melhor. Reduzimos o tamanho automaticamente.</p></div></div></div>
         <div class="field"><label for="ht">Título principal</label><input class="input" id="ht" maxlength="60" value="${esc(c.hero_titulo)}"></div>
         <div class="field"><label for="hs">Subtítulo</label><textarea class="textarea" id="hs" maxlength="200">${esc(c.hero_subtitulo)}</textarea></div>
         <div class="field"><label for="av">Faixa de avisos do topo <span class="hint">(um por linha)</span></label><textarea class="textarea" id="av">${esc((c.aviso_topo || []).join("\n"))}</textarea></div>
@@ -555,14 +551,6 @@ function configView() {
   $("#cat-in").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.value.trim()) { e.preventDefault(); cats.push(e.target.value.trim()); e.target.value = ""; drawCats(); S.dirty = true; } });
   $("#cats").addEventListener("click", (e) => { const b = e.target.closest("[data-rm]"); if (b) { cats.splice(+b.dataset.rm, 1); drawCats(); S.dirty = true; } });
   drawCats();
-  let heroImg = c.hero_imagem || "";
-  $("#hero-file").onchange = async (e) => {
-    const f = e.target.files[0]; if (!f) return;
-    $("#hero-img").style.opacity = .4;
-    try { heroImg = await db.uploadImage(f); $("#hero-img").src = heroImg; S.dirty = true; toast("Foto carregada. Clique em Salvar para aplicar."); }
-    catch (er) { toast("Erro ao enviar foto: " + errMsg(er), { err: true }); }
-    $("#hero-img").style.opacity = 1; e.target.value = "";
-  };
   const drawPrev = () => {
     const wa = $("#wa").value.replace(/\D/g, ""), ig = $("#ig").value.trim().replace(/^@/, ""), end = $("#end").value.trim(), maps = $("#maps").value.trim();
     const mapUrl = maps || (end ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("JS STORE " + end)}` : "");
@@ -581,7 +569,7 @@ function configView() {
     if (wa.length < 12) { toast("Confira o WhatsApp: use 55 + DDD + número.", { err: true }); return; }
     const cfg = {
       whatsapp: wa, instagram: $("#ig").value.trim().replace(/^@/, ""), grupo_vip: $("#vip").value.trim(), endereco: $("#end").value.trim(),
-      maps_url: $("#maps").value.trim(), hero_imagem: heroImg,
+      maps_url: $("#maps").value.trim(),
       hero_titulo: $("#ht").value.trim(), hero_subtitulo: $("#hs").value.trim(),
       aviso_topo: $("#av").value.split("\n").map((s) => s.trim()).filter(Boolean),
       promo_titulo: $("#pt").value.trim(), promo_texto: $("#px").value.trim(),

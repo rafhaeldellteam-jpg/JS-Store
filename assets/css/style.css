@@ -865,3 +865,18 @@ img { -webkit-user-drag: none; }
 .mnav-search svg { position: absolute; left: 16px; top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--ink-3); pointer-events: none; }
 img.is-error { opacity: 0 !important; }
 .card-media:has(img.is-error), .main-img:has(img.is-error), .hero-photo:has(img.is-error) { animation: none; background: var(--blush-100) url("/assets/img/butterfly.webp") center / 38% no-repeat; }
+
+/* =============================================================
+   Topo: logo da loja dentro do círculo (clara/escura com o tema)
+   ============================================================= */
+.hero-logo { position: relative; z-index: 1; width: 78%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 38%, #fff 0%, #fff6f4 55%, var(--blush-100) 100%); border: 1px solid var(--line); box-shadow: 0 40px 80px -34px rgba(147, 83, 63, .45), inset 0 0 0 10px rgba(255, 255, 255, .55); animation: logoIn 1.1s var(--ease) both; }
+.hero-logo img { grid-area: 1 / 1; width: 76%; height: auto; animation: float 7s ease-in-out infinite; }
+@keyframes logoIn { from { opacity: 0; transform: scale(.94); } }
+:root[data-theme="dark"] .hero-logo { background: radial-gradient(circle at 50% 38%, #2c1c20 0%, #1d1316 60%, #140d0f 100%); border-color: rgba(201, 134, 114, .25); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .8), 0 0 60px -10px rgba(201, 134, 114, .18), inset 0 0 0 10px rgba(255, 255, 255, .02); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-logo { background: radial-gradient(circle at 50% 38%, #2c1c20 0%, #1d1316 60%, #140d0f 100%); border-color: rgba(201, 134, 114, .25); box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .8), 0 0 60px -10px rgba(201, 134, 114, .18), inset 0 0 0 10px rgba(255, 255, 255, .02); } }
+@media (max-width: 860px) { .hero-logo { width: 84%; } }
+@media (prefers-reduced-motion: reduce) { .hero-logo, .hero-logo img { animation: none; } }
+@media (max-width: 860px) {
+  .hero-art .chip.c1 { bottom: -1%; left: 0; }
+  .hero-art .chip.c2 { top: 6%; right: -2%; }
+}

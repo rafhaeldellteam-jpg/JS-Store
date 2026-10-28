@@ -5,7 +5,7 @@
 //  Fotos e fontes: usa a cópia guardada (abre mais rápido).
 //  Supabase (dados, login): nunca é guardado.
 // =============================================================
-const VERSION = "jss-v1";
+const VERSION = "jss-v2";
 const SHELL = `${VERSION}-shell`;
 const MEDIA = `${VERSION}-media`;
 const MEDIA_MAX = 120;
@@ -16,6 +16,7 @@ const PRECACHE = [
   "/assets/js/config.js", "/assets/js/data.js", "/assets/js/ui.js", "/assets/js/checkout.js",
   "/assets/js/home.js", "/assets/js/loja.js", "/assets/js/produto.js",
   "/assets/img/butterfly.webp", "/assets/img/butterfly-dark.webp",
+  "/assets/img/logo-full.webp", "/assets/img/logo-full-dark.webp",
   "/assets/img/icon-192.png", "/assets/img/favicon.png",
 ];
 

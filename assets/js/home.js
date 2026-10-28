@@ -1,4 +1,4 @@
-import { listProducts, stockTotal, finalPrice, DEMO_HERO, listFeedbacks, submitFeedback, cleanInstagram, FEEDBACK_MAX_FOTOS } from "./data.js";
+import { listProducts, stockTotal, finalPrice, listFeedbacks, submitFeedback, cleanInstagram, FEEDBACK_MAX_FOTOS } from "./data.js";
 import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, mapPin, modal, closeModal, toast, $, $$, esc, brl, icon, waIcon } from "./ui.js";
 
 const cfg = await initPage("/");
@@ -15,8 +15,6 @@ if (cfg.pix_desconto) $("#trust-pix").textContent = `${cfg.pix_desconto}% off no
 if (cfg.frete_gratis_acima) $("#trust-ship").textContent = `Frete grátis acima de ${brl(cfg.frete_gratis_acima)}`;
 
 // foto do topo
-const heroImg = $("#hero-img");
-heroImg.src = cfg.hero_imagem || DEMO_HERO;
 
 // contato: WhatsApp, Instagram e Maps
 const L = contactLinks(cfg);
