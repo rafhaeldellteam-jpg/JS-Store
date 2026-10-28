@@ -3,7 +3,7 @@
 // =============================================================
 import * as db from "./data.js";
 import { SIZE_PRESETS, stockTotal, finalPrice, DEMO_MODE } from "./data.js";
-import { icon, brl, esc, toast, modal, closeModal, productCard, state, $, $$, waLink } from "./ui.js";
+import { icon, brl, esc, toast, modal, closeModal, productCard, state, $, $$, waLink, butterflySvg, toggleTheme, themeIcons } from "./ui.js";
 
 const I = {
   home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
@@ -40,6 +40,10 @@ const errMsg = (e) => (e && (e.message || e.error_description)) || "Algo deu err
 const imgOf = (p) => p.imagens?.[0] || "/assets/img/butterfly.webp";
 
 // ---------------- inicialização ----------------
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-theme-toggle]"); if (!t) return;
+  e.preventDefault(); toggleTheme(e);
+});
 boot();
 async function boot() {
   let user = null;
@@ -74,7 +78,7 @@ function loginView(msg = "") {
       <button class="btn btn-gold btn-block" id="lbtn">Entrar</button>
       ${DEMO_MODE ? "" : `<p style="text-align:center;margin:16px 0 0"><a href="#" class="link" id="forgot" style="font-size:14px">Esqueci minha senha</a></p>`}
     </form>
-    <p style="margin:22px 0 0"><a href="/" class="muted" style="font-size:13.5px">← Voltar para a loja</a></p>
+    <p style="margin:22px 0 0;display:flex;justify-content:space-between;align-items:center"><a href="/" class="muted" style="font-size:13.5px">Voltar para a loja</a><button class="icon-btn theme-btn" data-theme-toggle aria-label="Modo claro/escuro">${themeIcons()}</button></p>
   </div></div>`;
   $("#login-f").onsubmit = async (e) => {
     e.preventDefault();
@@ -110,6 +114,7 @@ function shell(active, title, sub, content, actions = "") {
       <a class="brand" href="/" target="_blank"><img src="/assets/img/butterfly.webp" alt="" width="40"><span><b>JS STORE</b><small>PAINEL</small></span></a>
       ${NAV.map(([k, t, i]) => `<a class="nav-i ${active === k ? "on" : ""}" href="#${k}">${ic(i)} ${t}${pill(k)}</a>`).join("")}
       <div class="bottom">
+        <a class="nav-i theme-btn" href="#" data-theme-toggle>${themeIcons()} Modo claro/escuro</a>
         <a class="nav-i" href="/" target="_blank">${ic("store")} Ver loja</a>
         <a class="nav-i" href="#" data-logout>${ic("out")} Sair</a>
       </div>
@@ -151,7 +156,7 @@ function dashboard() {
   const maxV = top[0]?.vendidos || 1;
   const hello = now.getHours() < 12 ? "Bom dia" : now.getHours() < 18 ? "Boa tarde" : "Boa noite";
 
-  shell("inicio", `${hello}!`, now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }), `
+  shell("inicio", `<span class="hello">${hello}! ${butterflySvg()}</span>`, now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }), `
     <div class="kpis">
       <div class="kpi"><div class="ic">${ic("money")}</div><span>Vendas no mês</span><b>${brl(fat)}</b><small>${vendasMes.length} pedido(s) confirmados</small></div>
       <div class="kpi ${pend.length ? "alert" : ""}"><div class="ic">${ic("receipt")}</div><span>Pedidos pendentes</span><b>${pend.length}</b><small><a class="link" href="#pedidos">ver pedidos</a></small></div>
@@ -647,6 +652,7 @@ function moreView() {
   shell("mais", "Mais opções", "", `<div class="panel" style="display:grid;gap:10px">
     <a class="btn btn-ghost btn-block" href="#config">${ic("gear")} Configurações da loja</a>
     <a class="btn btn-ghost btn-block" href="#calculadora">${ic("calc")} Calculadora de preço</a>
+    <button class="btn btn-ghost btn-block theme-btn" data-theme-toggle>${themeIcons()} Modo claro/escuro</button>
     <a class="btn btn-ghost btn-block" href="/" target="_blank">${ic("store")} Ver minha loja</a>
     <button class="btn btn-ghost btn-block" id="cp">${ic("link")} Copiar link da loja</button>
     <button class="btn btn-block" data-logout2>${ic("out")} Sair</button>

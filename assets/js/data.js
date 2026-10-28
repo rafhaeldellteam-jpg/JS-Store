@@ -31,7 +31,7 @@ export const DEFAULT_CONFIG = {
   ],
   hero_titulo: "Elegância que voa com você",
   hero_subtitulo: "Peças femininas selecionadas a dedo, com o toque de delicadeza que você merece.",
-  promo_titulo: "Semana da Borboleta",
+  promo_titulo: "Semana JS",
   promo_texto: "Peças selecionadas com preço especial. Corre que é por pouco tempo!",
   promo_fim: null,
   frete_gratis_acima: 299,
@@ -99,7 +99,10 @@ function demoProducts() {
 }
 function demoConfig() {
   const c = LS.get("config", null);
-  if (c) return { ...DEFAULT_CONFIG, endereco: "São Paulo - SP", ...c };
+  if (c) {
+    if (c.promo_titulo === "Semana da Borboleta") { c.promo_titulo = "Semana JS"; LS.set("config", c); }
+    return { ...DEFAULT_CONFIG, endereco: "São Paulo - SP", ...c };
+  }
   const d = { ...DEFAULT_CONFIG, endereco: "São Paulo - SP", promo_fim: new Date(Date.now() + 3 * 86400000).toISOString() };
   LS.set("config", d);
   return d;

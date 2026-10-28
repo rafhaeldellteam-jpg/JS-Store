@@ -32,9 +32,42 @@ const P = {
   pointer: '<path d="M12 19V5M5 12l7-7 7 7"/>',
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   arrow: '<path d="M5 12h14M13 5l7 7-7 7"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   star: '<path d="M11.52 2.3a.53.53 0 0 1 .95 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.01a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .3-.9l5.16-.76a2.12 2.12 0 0 0 1.6-1.16z"/>',
 };
 export const icon = (n, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ""}</svg>`;
+/** Borboleta da marca em SVG (contorno rose gold, asas batendo de leve). */
+let _bf = 0;
+export function butterflySvg(cls = "bfly-ic") {
+  const id = "bfg" + ++_bf;
+  return `<svg class="${cls}" viewBox="0 0 64 56" fill="none" aria-hidden="true">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1c4b3"/><stop offset=".45" stop-color="#c98672"/><stop offset="1" stop-color="#93533f"/></linearGradient></defs>
+    <g stroke="url(#${id})" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <g class="w wl"><path d="M31 25C26 12 14 5 6 8c-5 3-2 14 6 18 6 3 13 3 19 1" fill="#f6c9c3" fill-opacity=".35"/><path d="M31 29c-6 1-15 5-16 13-1 8 8 10 12 3 2-4 3-9 4-14" fill="#f6c9c3" fill-opacity=".35"/></g>
+      <g class="w wr"><path d="M33 25c5-13 17-20 25-17 5 3 2 14-6 18-6 3-13 3-19 1" fill="#f6c9c3" fill-opacity=".35"/><path d="M33 29c6 1 15 5 16 13 1 8-8 10-12 3-2-4-3-9-4-14" fill="#f6c9c3" fill-opacity=".35"/></g>
+      <path d="M32 22v24"/><path d="M31 21c-1-7-4-12-9-14M33 21c1-7 4-12 9-14"/>
+    </g><circle cx="22" cy="7" r="1.8" fill="#c98672"/><circle cx="42" cy="7" r="1.8" fill="#c98672"/></svg>`;
+}
+
+// ---------- modo escuro ----------
+const THEME_KEY = "jss_theme";
+export function currentTheme() {
+  const t = document.documentElement.dataset.theme;
+  return t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+export function toggleTheme(ev) {
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  const apply = () => { document.documentElement.dataset.theme = next; try { localStorage.setItem(THEME_KEY, next); } catch {} };
+  const root = document.documentElement;
+  if (ev && ev.clientX != null) { root.style.setProperty("--tx", ev.clientX + "px"); root.style.setProperty("--ty", ev.clientY + "px"); }
+  if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    root.classList.add("theme-switching");
+    document.startViewTransition(apply).finished.finally(() => root.classList.remove("theme-switching"));
+  } else apply();
+}
+export const themeIcons = () => `${icon("moon", "i-moon")}${icon("sun", "i-sun")}`;
+
 export const waIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.08.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.28.17-1.41-.07-.12-.27-.2-.57-.35M12.05 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37A9.86 9.86 0 0 1 2.16 12C2.16 6.55 6.6 2.12 12.06 2.12c2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.89 7c0 5.45-4.44 9.89-9.89 9.89m8.41-18.3A11.81 11.81 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9 0-3.18-1.24-6.16-3.48-8.41"/></svg>';
 
 export const brl = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -54,6 +87,8 @@ export function contactLinks(cfg = {}) {
   };
 }
 const PLACEHOLDER = "/assets/img/butterfly.webp";
+// Crédito do desenvolvedor (rodapé)
+const DEV_WA = "https://wa.me/5511913347390?text=" + encodeURIComponent("Olá, gostaria de um orçamento para criação de site!");
 export const imgOf = (p, i = 0) => (p.imagens && p.imagens[i]) || PLACEHOLDER;
 
 // ---------- armazenamento local ----------
@@ -273,13 +308,14 @@ function layout(cfg, active) {
     <div style="display:flex;align-items:center;gap:20px"><button class="icon-btn menu-btn" id="menu-btn" aria-label="Menu">${icon("menu")}</button><nav class="nav">${nav}</nav></div>
     ${brand}
     <div class="actions">
+      <button class="icon-btn theme-btn" data-theme-toggle aria-label="Alternar modo escuro" title="Modo claro/escuro">${themeIcons()}</button>
       <button class="icon-btn" id="search-btn" aria-label="Buscar">${icon("search")}</button>
       <button class="icon-btn" id="fav-btn" aria-label="Favoritos">${icon("heart")}<span class="badge" id="fav-count">0</span></button>
       <button class="icon-btn" id="cart-btn" aria-label="Sacola">${icon("bag")}<span class="badge" id="cart-count">0</span></button>
     </div></div>
     <div class="search-bar" id="search-bar"><form class="wrap" action="/loja"><input class="input" name="q" placeholder="O que você procura? Ex.: vestido, blazer..." autocomplete="off"><button class="btn btn-sm">Buscar</button></form></div>
   </header>
-  <nav class="mnav" id="mnav">${brand}${links.map(([h, t]) => `<a href="${h}">${t}</a>`).join("")}<a href="/admin/" style="font-size:16px;font-family:var(--sans);border:0;margin-top:auto;color:var(--ink-3)">Área da loja</a></nav>`;
+  <nav class="mnav" id="mnav">${brand}${links.map(([h, t]) => `<a href="${h}">${t}</a>`).join("")}<button class="btn btn-ghost btn-sm theme-btn" data-theme-toggle style="margin-top:auto;align-self:flex-start">${themeIcons()} Claro / escuro</button><a href="/admin/" style="font-size:16px;font-family:var(--sans);border:0;color:var(--ink-3)">Área da loja</a></nav>`;
 
   const L = contactLinks(cfg);
   const footer = `
@@ -296,7 +332,11 @@ function layout(cfg, active) {
           ${cfg.grupo_vip ? `<a href="${esc(cfg.grupo_vip)}" target="_blank" rel="noopener"><span class="ci">${icon("bell")}</span>Grupo VIP</a>` : ""}
         </div></div>
     </div>
-    <div class="footer-bottom"><span>© ${new Date().getFullYear()} JS STORE · Moda Feminina</span><div class="pay"><span>Pix</span><span>Cartão</span><span>Dinheiro</span></div></div>
+    <div class="footer-bottom"><span>© ${new Date().getFullYear()} JS STORE · Moda Feminina. Todos os direitos reservados.</span><div class="pay"><span>Pix</span><span>Cartão</span><span>Dinheiro</span></div></div>
+    <div class="dev-credit">
+      <span>Desenvolvido por</span>
+      <a href="${DEV_WA}" target="_blank" rel="noopener noreferrer" title="Falar com Phael Tech Support no WhatsApp"><img src="/assets/img/phael-logo.webp" alt="Phael Tech Support" width="535" height="217" loading="lazy"></a>
+    </div>
   </div></footer>
   <div class="social-float" aria-label="Fale com a JS STORE">
     ${L.maps ? `<a class="sf sf-map" href="${L.maps}" target="_blank" rel="noopener" aria-label="Ver no Google Maps"><span class="sf-tip">Como chegar</span>${icon("pin")}</a>` : ""}
@@ -306,7 +346,7 @@ function layout(cfg, active) {
   <div class="overlay" id="overlay"></div>
   <aside class="drawer" id="drawer-cart" aria-label="Sacola"><div class="drawer-head"><h3>Sua sacola</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x")}</button></div><div class="drawer-body"></div><div class="drawer-foot"></div></aside>
   <aside class="drawer" id="drawer-favs" aria-label="Favoritos"><div class="drawer-head"><h3>Favoritos</h3><button class="icon-btn" data-close aria-label="Fechar">${icon("x")}</button></div><div class="drawer-body"></div></aside>
-  ${DEMO_MODE ? `<div style="position:fixed;left:14px;bottom:14px;z-index:45;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:11.5px;color:var(--ink-3);box-shadow:var(--shadow-sm)">Modo demonstração</div>` : ""}`;
+  ${DEMO_MODE ? `<div style="position:fixed;left:14px;bottom:14px;z-index:45;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:11.5px;color:var(--ink-3);box-shadow:var(--shadow-sm)">Modo demonstração</div>` : ""}`;
 
   $("#site-header").innerHTML = header;
   $("#site-footer").innerHTML = footer;
@@ -321,6 +361,7 @@ function bindGlobal() {
     else if (t.id === "menu-btn") { $("#mnav").classList.add("open"); $("#overlay").classList.add("open"); }
     else if (t.id === "search-btn") { const s = $("#search-bar"); s.classList.toggle("open"); if (s.classList.contains("open")) setTimeout(() => s.querySelector("input").focus(), 200); }
     else if (t.hasAttribute("data-close")) closeDrawers();
+    else if (t.hasAttribute("data-theme-toggle")) toggleTheme(e);
     else if (t.hasAttribute("data-sizeguide")) { e.preventDefault(); sizeGuide(); }
     else if (t.dataset.q) { const idx = +t.dataset.q; cart.setQty(idx, cart.items()[idx].qtd + +t.dataset.d); }
     else if (t.dataset.rm) cart.setQty(+t.dataset.rm, 0);

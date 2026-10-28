@@ -67,7 +67,7 @@ values (1,
   '{"Frete grátis acima de R$ 299","5% de desconto no Pix","Troca fácil em até 7 dias","Novidades toda semana"}',
   'Elegância que voa com você',
   'Peças femininas selecionadas a dedo, com o toque de delicadeza que você merece.',
-  'Semana da Borboleta', 'Peças selecionadas com preço especial. Corre que é por pouco tempo!', 299, 5)
+  'Semana JS', 'Peças selecionadas com preço especial. Corre que é por pouco tempo!', 299, 5)
 on conflict (id) do nothing;
 
 -- ---------- Pedidos (vindos do carrinho / WhatsApp) ----------

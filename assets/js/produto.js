@@ -7,7 +7,7 @@ let p = null;
 try { p = slug ? await getProduct(slug) : null; } catch (e) { console.error(e); }
 
 if (!p || (!p.ativo && p.ativo !== undefined)) {
-  $("#pdp").innerHTML = `<div class="empty" style="padding:100px 0"><img src="/assets/img/butterfly.webp" alt=""><h2 style="font-family:var(--display);font-weight:500;font-size:36px;color:var(--ink)">Peça não encontrada</h2><p>Ela pode ter esgotado ou saído da loja.</p><a class="btn" href="/loja">Ver outras peças</a></div>`;
+  $("#pdp").innerHTML = `<div class="empty" style="padding:100px 0"><img src="/assets/img/butterfly.webp" alt=""><h2 style="font-family:var(--display);font-weight:500;font-size:36px;color:var(--text)">Peça não encontrada</h2><p>Ela pode ter esgotado ou saído da loja.</p><a class="btn" href="/loja">Ver outras peças</a></div>`;
 } else render();
 
 function render() {
