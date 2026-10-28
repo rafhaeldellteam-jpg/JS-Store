@@ -20,7 +20,8 @@ Site estático (HTML/CSS/JS, sem build) hospedado na **Vercel**, com banco de da
 - Favoritos e sacola salvos no aparelho, barra de frete grátis
 - Checkout pelo **WhatsApp**: a cliente informa nome, entrega e pagamento, o pedido é registrado no painel e a mensagem chega pronta no WhatsApp da loja
 
-**Painel (`/admin`)**
+**Painel (`/admin`)**: login provisório **admin / admin** (troque em Configurações → Sua conta)
+- Feedbacks: aprovar, reprovar, mostrar/ocultar no carrossel do site, editar, excluir e adicionar
 - Início com vendas do mês, pedidos pendentes, estoque acabando e mais vendidos
 - Produtos: cadastrar/editar com fotos (comprimidas automaticamente), tamanhos com estoque, cores, preço promocional, prévia ao vivo, duplicar, esconder/mostrar
 - Estoque rápido: ajusta todas as quantidades numa tela só
@@ -37,10 +38,10 @@ Enquanto o Supabase não estiver configurado, o site roda em **modo demonstraç�
 
 1. Crie uma conta em <https://supabase.com> → **New project** (região *South America (São Paulo)*).
 2. **SQL Editor → New query**: cole todo o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e clique **Run**.
-3. **Authentication → Users → Add user → Create new user**: e-mail e senha da cliente (marque *Auto Confirm User*).
-4. No SQL Editor, rode (trocando o e-mail):
+3. **Authentication → Users → Add user → Create new user**: e-mail `admin@jsstore.local` (é o usuário **admin** do painel), uma senha forte e marque *Auto Confirm User*.
+4. No SQL Editor, rode:
    ```sql
-   insert into public.admins (email) values ('email-da-cliente@exemplo.com');
+   insert into public.admins (email) values ('admin@jsstore.local');
    ```
 5. **Authentication → Sign In / Providers**: desative *Allow new users to sign up* (ninguém mais cria conta).
 6. **Authentication → URL Configuration**: em *Site URL* coloque o endereço do site na Vercel (para o "esqueci minha senha" funcionar).
@@ -48,7 +49,7 @@ Enquanto o Supabase não estiver configurado, o site roda em **modo demonstraç�
 
 > A chave *anon* é pública por natureza. Quem protege os dados são as regras (RLS) do `schema.sql`: só e-mails da tabela `admins` alteram produtos, fotos, pedidos e configurações; os preços dos pedidos são recalculados no servidor.
 
-Depois disso, entre em `/admin` com o e-mail e senha da cliente e vá em **Configurações** para colocar o WhatsApp da loja.
+Depois disso, entre em `/admin` com o usuário **admin** e a senha criada e vá em **Configurações** para colocar o WhatsApp da loja.
 
 ## Deploy na Vercel
 

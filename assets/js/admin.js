@@ -26,6 +26,10 @@ const I = {
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+  eyeOff: '<path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><path d="m2 2 20 20"/><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>',
+  thumbUp: '<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',
+  thumbDown: '<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>',
   pin: '<path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   image: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/>',
   store: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M2 7h20v3a2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0Z"/>',
@@ -33,7 +37,7 @@ const I = {
 const ic = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n] || ""}</svg>`;
 
 const app = $("#app");
-const S = { products: [], orders: [], config: null, dirty: false };
+const S = { products: [], orders: [], feedbacks: [], config: null, dirty: false };
 const STATUS = { pendente: "Pendente", confirmado: "Confirmado", enviado: "Enviado", entregue: "Entregue", cancelado: "Cancelado" };
 const fmtDate = (d) => new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 const errMsg = (e) => (e && (e.message || e.error_description)) || "Algo deu errado. Tente novamente.";
@@ -58,7 +62,8 @@ async function boot() {
 }
 
 async function loadAll() {
-  const [c, p, o] = await Promise.allSettled([db.getConfig(), db.listProducts({ admin: true }), db.listOrders()]);
+  const [c, p, o, f] = await Promise.allSettled([db.getConfig(), db.listProducts({ admin: true }), db.listOrders(), db.listFeedbacks({ admin: true })]);
+  S.feedbacks = f.value || [];
   S.config = c.value || db.DEFAULT_CONFIG; state.config = S.config;
   S.products = p.value || [];
   S.orders = o.value || [];
@@ -70,13 +75,11 @@ function loginView(msg = "") {
   app.innerHTML = `<div class="login"><div class="login-box">
     <img src="/assets/img/logo-full.webp" alt="JS STORE">
     <h1>Área da loja</h1><p class="muted" style="margin:0">Entre para gerenciar seus produtos</p>
-    ${DEMO_MODE ? `<div class="demo-banner" style="margin:16px 0 0;text-align:left">Modo demonstração: clique em <b>Entrar</b> (qualquer senha). Os dados ficam só neste navegador.</div>` : ""}
     <form id="login-f">
-      <div class="field"><label for="em">E-mail</label><input class="input" id="em" type="email" autocomplete="username" ${DEMO_MODE ? "" : "required"}></div>
-      <div class="field"><label for="pw">Senha</label><input class="input" id="pw" type="password" autocomplete="current-password" ${DEMO_MODE ? "" : "required"}></div>
+      <div class="field"><label for="em">Usuário</label><input class="input" id="em" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+      <div class="field"><label for="pw">Senha</label><input class="input" id="pw" type="password" autocomplete="current-password" required></div>
       <div class="err" id="lerr">${esc(msg)}</div>
       <button class="btn btn-gold btn-block" id="lbtn">Entrar</button>
-      ${DEMO_MODE ? "" : `<p style="text-align:center;margin:16px 0 0"><a href="#" class="link" id="forgot" style="font-size:14px">Esqueci minha senha</a></p>`}
     </form>
     <p style="margin:22px 0 0;display:flex;justify-content:space-between;align-items:center"><a href="/" class="muted" style="font-size:13.5px">Voltar para a loja</a><button class="icon-btn theme-btn" data-theme-toggle aria-label="Modo claro/escuro">${themeIcons()}</button></p>
   </div></div>`;
@@ -86,17 +89,10 @@ function loginView(msg = "") {
     try { await db.login($("#em").value.trim(), $("#pw").value); location.hash = "#inicio"; location.reload(); }
     catch (er) { $("#lerr").textContent = errMsg(er); b.disabled = false; b.textContent = "Entrar"; }
   };
-  $("#forgot")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    const em = $("#em").value.trim();
-    if (!em) { $("#lerr").textContent = "Digite seu e-mail acima primeiro."; return; }
-    try { await db.resetPassword(em); $("#lerr").style.color = "var(--ok)"; $("#lerr").textContent = "Enviamos um link para seu e-mail."; }
-    catch (er) { $("#lerr").textContent = errMsg(er); }
-  });
 }
 function noAccessView(user) {
   app.innerHTML = `<div class="login"><div class="login-box"><img src="/assets/img/logo-full.webp" alt="JS STORE">
-  <h1>Sem permissão</h1><p class="muted">O e-mail <b>${esc(user.email)}</b> entrou, mas ainda não foi liberado como administrador.</p>
+  <h1>Sem permissão</h1><p class="muted">O usuário <b>${esc(String(user.email).replace("@" + db.ADMIN_DOMAIN, ""))}</b> entrou, mas ainda não foi liberado como administrador.</p>
   <button class="btn btn-ghost btn-block" id="lo">Sair</button></div></div>`;
   $("#lo").onclick = async () => { await db.logout(); location.reload(); };
 }
@@ -104,11 +100,12 @@ function noAccessView(user) {
 // ---------------- estrutura ----------------
 const NAV = [
   ["inicio", "Início", "home"], ["produtos", "Produtos", "shirt"], ["estoque", "Estoque", "box"],
-  ["pedidos", "Pedidos", "receipt"], ["config", "Configurações", "gear"], ["calculadora", "Calculadora", "calc"],
+  ["pedidos", "Pedidos", "receipt"], ["feedbacks", "Feedbacks", "msg"], ["config", "Configurações", "gear"], ["calculadora", "Calculadora", "calc"],
 ];
 function shell(active, title, sub, content, actions = "") {
   const pend = S.orders.filter((o) => o.status === "pendente").length;
-  const pill = (k) => (k === "pedidos" && pend ? `<span class="pill">${pend}</span>` : "");
+  const fbPend = S.feedbacks.filter((f) => f.status === "pendente").length;
+  const pill = (k) => (k === "pedidos" && pend ? `<span class="pill">${pend}</span>` : k === "feedbacks" && fbPend ? `<span class="pill">${fbPend}</span>` : k === "mais" && fbPend ? `<span class="pill">${fbPend}</span>` : "");
   app.innerHTML = `<div class="shell">
     <aside class="side">
       <a class="brand" href="/" target="_blank"><img src="/assets/img/butterfly.webp" alt="" width="40"><span><b>JS STORE</b><small>PAINEL</small></span></a>
@@ -120,17 +117,15 @@ function shell(active, title, sub, content, actions = "") {
       </div>
     </aside>
     <main class="main">
-      ${DEMO_MODE ? `<div class="demo-banner"><b>Modo demonstração</b> — tudo que você cadastrar fica salvo só neste navegador. Depois de conectar o Supabase, os dados ficam online. <a href="#" class="link" data-resetdemo>Restaurar exemplo</a></div>` : ""}
       <div class="topline"><div><h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ""}</div><div style="display:flex;gap:8px;flex-wrap:wrap">${actions}</div></div>
       <div id="view">${content}</div>
     </main>
     <nav class="tabbar">
       ${[["inicio", "Início", "home"], ["produtos", "Produtos", "shirt"], ["estoque", "Estoque", "box"], ["pedidos", "Pedidos", "receipt"], ["mais", "Mais", "more"]]
-        .map(([k, t, i]) => `<a href="#${k}" class="${active === k || (k === "mais" && ["config", "calculadora"].includes(active)) ? "on" : ""}">${ic(i)}${t}${pill(k)}</a>`).join("")}
+        .map(([k, t, i]) => `<a href="#${k}" class="${active === k || (k === "mais" && ["config", "calculadora", "feedbacks"].includes(active)) ? "on" : ""}">${ic(i)}${t}${pill(k)}</a>`).join("")}
     </nav>
   </div>`;
   $("[data-logout]").onclick = async (e) => { e.preventDefault(); await db.logout(); location.hash = ""; location.reload(); };
-  $("[data-resetdemo]")?.addEventListener("click", (e) => { e.preventDefault(); if (confirm("Apagar seus testes e voltar aos produtos de exemplo?")) { db.resetDemo(); location.reload(); } });
   scrollTo(0, 0);
 }
 
@@ -138,7 +133,7 @@ function route() {
   if (S.dirty && !confirm("Você tem alterações não salvas. Sair mesmo assim?")) { history.back(); return; }
   S.dirty = false;
   const [r, arg] = location.hash.slice(1).split("/");
-  ({ inicio: dashboard, produtos: productsView, produto: () => productForm(arg), estoque: stockView, pedidos: ordersView, config: configView, calculadora: calcView, mais: moreView }[r] || dashboard)();
+  ({ inicio: dashboard, produtos: productsView, produto: () => productForm(arg), estoque: stockView, pedidos: ordersView, config: configView, calculadora: calcView, mais: moreView, feedbacks: feedbacksView }[r] || dashboard)();
 }
 
 // ---------------- início ----------------
@@ -174,6 +169,7 @@ function dashboard() {
         </div>
       </div>
       <div>
+        ${S.feedbacks.some((f) => f.status === "pendente") ? `<a class="panel fb-alert" href="#feedbacks">${ic("msg")}<span><b>${S.feedbacks.filter((f) => f.status === "pendente").length} feedback(s) esperando aprovação</b><small>Toque para revisar</small></span></a>` : ""}
         <div class="panel"><h3>Ações rápidas</h3>
           <div style="display:grid;gap:10px">
             <a class="btn btn-gold btn-block" href="#produto/novo">${ic("plus")} Cadastrar produto</a>
@@ -548,7 +544,8 @@ function configView() {
       <div class="panel"><h3>Categorias sugeridas</h3>
         <div class="tagsin" id="cats"><input placeholder="Nova categoria + Enter" id="cat-in"></div>
       </div>
-      ${DEMO_MODE ? "" : `<div class="panel"><h3>Sua conta</h3><button type="button" class="btn btn-ghost btn-block" id="chpw">Trocar minha senha</button></div>`}
+      <div class="panel"><h3>Sua conta</h3><button type="button" class="btn btn-ghost btn-block" id="chpw">Trocar minha senha</button>
+        ${DEMO_MODE ? `<button type="button" class="btn btn-ghost btn-block" style="margin-top:10px" id="resetdemo">Restaurar dados de exemplo</button>` : ""}</div>
     </div>
     <div class="savebar" style="grid-column:1/-1"><button class="btn btn-gold" id="save">Salvar configurações</button></div>
   </form>`);
@@ -576,6 +573,7 @@ function configView() {
   ["wa", "ig", "end", "maps"].forEach((id) => $("#" + id).addEventListener("input", drawPrev)); drawPrev();
   $("#cf").addEventListener("input", () => (S.dirty = true));
   $("#chpw")?.addEventListener("click", changePasswordModal);
+  $("#resetdemo")?.addEventListener("click", () => { if (confirm("Apagar seus testes e voltar aos dados de exemplo?")) { db.resetDemo(); location.reload(); } });
   $("#cf").onsubmit = async (e) => {
     e.preventDefault();
     const wa = $("#wa").value.replace(/\D/g, "");
@@ -598,7 +596,7 @@ function configView() {
 }
 
 function changePasswordModal() {
-  modal(`<h3>Nova senha</h3><p class="muted">Mínimo de 8 caracteres.</p>
+  modal(`<h3>Nova senha</h3><p class="muted">Use pelo menos 8 caracteres, misturando letras e números.</p>
     <form id="pwf"><div class="field"><input class="input" type="password" id="np" minlength="8" required autocomplete="new-password" placeholder="Nova senha"></div>
     <button class="btn btn-gold btn-block">Salvar senha</button></form>`, {
     onOpen(m) {
@@ -650,6 +648,7 @@ function calcView() {
 // ---------------- "Mais" (celular) ----------------
 function moreView() {
   shell("mais", "Mais opções", "", `<div class="panel" style="display:grid;gap:10px">
+    <a class="btn btn-ghost btn-block" href="#feedbacks">${ic("msg")} Feedbacks${S.feedbacks.some((f) => f.status === "pendente") ? ` (${S.feedbacks.filter((f) => f.status === "pendente").length} novo)` : ""}</a>
     <a class="btn btn-ghost btn-block" href="#config">${ic("gear")} Configurações da loja</a>
     <a class="btn btn-ghost btn-block" href="#calculadora">${ic("calc")} Calculadora de preço</a>
     <button class="btn btn-ghost btn-block theme-btn" data-theme-toggle>${themeIcons()} Modo claro/escuro</button>
@@ -659,4 +658,98 @@ function moreView() {
     <p class="hint" style="text-align:center;margin:8px 0 0">Dica: no celular, use "Adicionar à tela de início" para abrir o painel como um app.</p></div>`);
   $("#cp").onclick = async () => { await navigator.clipboard?.writeText(location.origin); toast("Link copiado!"); };
   $("[data-logout2]").onclick = async () => { await db.logout(); location.hash = ""; location.reload(); };
+}
+
+// ---------------- feedbacks ----------------
+const FB_STATUS = { pendente: "Pendente", aprovado: "Aprovado", reprovado: "Reprovado" };
+const stars = (n) => `<span class="stars" aria-label="${n} de 5">${[1, 2, 3, 4, 5].map((i) => `<svg viewBox="0 0 24 24" class="${i <= n ? "on" : ""}"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg>`).join("")}</span>`;
+
+function feedbacksView() {
+  let filtro = S.feedbacks.some((f) => f.status === "pendente") ? "pendente" : "";
+  shell("feedbacks", "Feedbacks", "Aprove, reprove e escolha quais aparecem no carrossel do site", `
+    <p class="hint" style="margin:-10px 0 16px">Só aparecem no site os feedbacks <b>aprovados</b> com a opção <b>Mostrar no site</b> ligada.</p>
+    <div class="seg" id="seg" style="margin-bottom:16px"></div><div class="fb-grid" id="list"></div>`,
+    `<button class="btn btn-gold btn-sm" id="add-fb">${ic("plus")} Adicionar feedback</button>`);
+  const draw = () => {
+    const count = (k) => S.feedbacks.filter((f) => (k === "site" ? f.status === "aprovado" && f.visivel : !k || f.status === k)).length;
+    $("#seg").innerHTML = [["pendente", "Pendentes"], ["aprovado", "Aprovados"], ["site", "No site"], ["reprovado", "Reprovados"], ["", "Todos"]]
+      .map(([k, t]) => `<button class="${filtro === k ? "on" : ""}" data-f="${k}">${t} (${count(k)})</button>`).join("");
+    const list = S.feedbacks.filter((f) => (filtro === "site" ? f.status === "aprovado" && f.visivel : !filtro || f.status === filtro));
+    $("#list").innerHTML = list.map((f) => `
+      <div class="fb-card ${f.status}" data-id="${esc(f.id)}">
+        <div class="fb-top">${stars(f.nota)}<span class="st ${f.status === "aprovado" ? "entregue" : f.status === "reprovado" ? "cancelado" : "pendente"}">${FB_STATUS[f.status]}</span></div>
+        <p class="fb-text">${esc(f.texto)}</p>
+        <div class="fb-who"><b>${esc(f.nome)}</b>${f.cidade ? ` · ${esc(f.cidade)}` : ""}<small>${fmtDate(f.created_at)}</small></div>
+        <div class="fb-actions">
+          ${f.status !== "aprovado" ? `<button class="btn btn-sm fb-ok" data-act="aprovar">${ic("thumbUp")} Aprovar</button>` : ""}
+          ${f.status !== "reprovado" ? `<button class="btn btn-ghost btn-sm" data-act="reprovar">${ic("thumbDown")} Reprovar</button>` : ""}
+          <label class="switch ${f.status !== "aprovado" ? "disabled" : ""}" title="${f.status !== "aprovado" ? "Aprove primeiro para mostrar no site" : "Mostrar no carrossel do site"}"><input type="checkbox" data-act="visivel" ${f.visivel && f.status === "aprovado" ? "checked" : ""} ${f.status !== "aprovado" ? "disabled" : ""}><i></i> Mostrar no site</label>
+          <span style="margin-left:auto;display:flex;gap:2px"><button class="icon-btn" data-act="editar" title="Editar">${ic("edit")}</button><button class="icon-btn" data-act="excluir" title="Excluir">${ic("trash")}</button></span>
+        </div>
+      </div>`).join("") || `<div class="panel" style="text-align:center;grid-column:1/-1"><p class="muted">${filtro === "pendente" ? "Nenhum feedback esperando aprovação." : "Nenhum feedback aqui ainda."}</p></div>`;
+  };
+  const update = async (f, patch, msg) => {
+    try { const saved = await db.saveFeedback({ id: f.id, ...patch }); Object.assign(f, patch, saved || {}); draw(); updatePills(); msg && toast(msg); }
+    catch (er) { toast(errMsg(er), { err: true }); draw(); }
+  };
+  $("#seg").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { filtro = b.dataset.f; draw(); } });
+  $("#list").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-act]"); if (!b) return;
+    const f = S.feedbacks.find((x) => String(x.id) === b.closest(".fb-card").dataset.id);
+    const a = b.dataset.act;
+    if (a === "aprovar") update(f, { status: "aprovado", visivel: true }, "Feedback aprovado e visível no site");
+    else if (a === "reprovar") update(f, { status: "reprovado", visivel: false }, "Feedback reprovado");
+    else if (a === "editar") feedbackModal(f, draw);
+    else if (a === "excluir" && confirm(`Excluir o feedback de ${f.nome}?`)) {
+      try { await db.deleteFeedback(f.id); S.feedbacks = S.feedbacks.filter((x) => x !== f); draw(); updatePills(); toast("Feedback excluído"); } catch (er) { toast(errMsg(er), { err: true }); }
+    }
+  });
+  $("#list").addEventListener("change", (e) => {
+    if (e.target.dataset.act !== "visivel") return;
+    const f = S.feedbacks.find((x) => String(x.id) === e.target.closest(".fb-card").dataset.id);
+    update(f, { visivel: e.target.checked }, e.target.checked ? "Agora aparece no site" : "Escondido do site");
+  });
+  $("#add-fb").onclick = () => feedbackModal(null, draw);
+  draw();
+}
+
+function updatePills() {
+  const n = S.feedbacks.filter((f) => f.status === "pendente").length;
+  $$('.side a[href="#feedbacks"] .pill, .tabbar a[href="#mais"] .pill').forEach((p) => p.remove());
+  if (n) {
+    $('.side a[href="#feedbacks"]')?.insertAdjacentHTML("beforeend", `<span class="pill">${n}</span>`);
+    $('.tabbar a[href="#mais"]')?.insertAdjacentHTML("beforeend", `<span class="pill">${n}</span>`);
+  }
+}
+
+/** Adicionar (ex.: elogio recebido no WhatsApp) ou editar um feedback. */
+function feedbackModal(f, onDone) {
+  const v = f || { nome: "", cidade: "", nota: 5, texto: "", status: "aprovado", visivel: true };
+  modal(`<h3>${f ? "Editar feedback" : "Adicionar feedback"}</h3>
+    <p class="muted" style="margin:0 0 16px">${f ? "Ajuste o texto se precisar corrigir algum erro de digitação." : "Use para registrar um elogio que a cliente mandou no WhatsApp ou Instagram (com a permissão dela)."}</p>
+    <form id="fbf">
+      <div class="row2"><div class="field"><label for="fn">Nome *</label><input class="input" id="fn" maxlength="80" required value="${esc(v.nome)}"></div>
+      <div class="field"><label for="fc">Cidade</label><input class="input" id="fc" maxlength="60" value="${esc(v.cidade)}"></div></div>
+      <div class="field"><label>Nota</label><div class="star-pick" id="fs">${[1, 2, 3, 4, 5].map((i) => `<button type="button" data-n="${i}" class="${i <= v.nota ? "on" : ""}" aria-label="${i} estrela(s)"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg></button>`).join("")}</div></div>
+      <div class="field"><label for="ft">Comentário *</label><textarea class="textarea" id="ft" maxlength="600" required>${esc(v.texto)}</textarea></div>
+      ${f ? "" : `<label class="switch" style="margin-bottom:16px"><input type="checkbox" id="fv" checked><i></i> Aprovar e mostrar no site</label>`}
+      <button class="btn btn-gold btn-block">Salvar</button>
+    </form>`, {
+    onOpen(m) {
+      let nota = v.nota;
+      m.querySelector("#fs").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; nota = +b.dataset.n; m.querySelectorAll("#fs button").forEach((x) => x.classList.toggle("on", +x.dataset.n <= nota)); });
+      m.querySelector("#fbf").onsubmit = async (e) => {
+        e.preventDefault();
+        const row = { nome: m.querySelector("#fn").value.trim(), cidade: m.querySelector("#fc").value.trim(), nota, texto: m.querySelector("#ft").value.trim() };
+        if (!row.nome || row.texto.length < 5) { toast("Preencha o nome e o comentário.", { err: true }); return; }
+        if (f) row.id = f.id;
+        else { const on = m.querySelector("#fv").checked; row.status = on ? "aprovado" : "pendente"; row.visivel = on; }
+        try {
+          const saved = await db.saveFeedback(row);
+          if (f) Object.assign(f, row, saved || {}); else S.feedbacks.unshift({ ...row, ...(saved || {}) });
+          closeModal(); onDone(); updatePills(); toast(f ? "Feedback atualizado" : "Feedback adicionado");
+        } catch (er) { toast(errMsg(er), { err: true }); }
+      };
+    },
+  });
 }

@@ -288,11 +288,22 @@ export async function isAdmin() {
   const { data, error } = await c.rpc("is_admin");
   return !error && data === true;
 }
-export async function login(email, password) {
-  if (DEMO_MODE) { LS.set("demo_login", true); return { email: "demo@jsstore" }; }
+// Usuário padrão do painel (provisório): admin / admin
+// No Supabase, "admin" vira o e-mail admin@jsstore.local (crie esse usuário lá).
+export const ADMIN_DOMAIN = "jsstore.local";
+const toEmail = (u) => (String(u).includes("@") ? String(u).trim() : `${String(u).trim().toLowerCase()}@${ADMIN_DOMAIN}`);
+const demoCred = () => LS.get("demo_cred", { u: "admin", p: "admin" });
+
+export async function login(user, password) {
+  if (!String(user).trim() || !password) throw new Error("Preencha usuário e senha.");
+  if (DEMO_MODE) {
+    const cred = demoCred();
+    if (String(user).trim().toLowerCase() !== cred.u || password !== cred.p) throw new Error("Usuário ou senha incorretos.");
+    LS.set("demo_login", true); return { email: cred.u };
+  }
   const c = await sb();
-  const { data, error } = await c.auth.signInWithPassword({ email, password });
-  if (error) throw new Error(error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message);
+  const { data, error } = await c.auth.signInWithPassword({ email: toEmail(user), password });
+  if (error) throw new Error(error.message === "Invalid login credentials" ? "Usuário ou senha incorretos." : error.message);
   return data.user;
 }
 export async function logout() {
@@ -303,11 +314,11 @@ export async function logout() {
 export async function resetPassword(email) {
   if (DEMO_MODE) return;
   const c = await sb();
-  const { error } = await c.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/admin/" });
+  const { error } = await c.auth.resetPasswordForEmail(toEmail(email), { redirectTo: location.origin + "/admin/" });
   if (error) throw error;
 }
 export async function updatePassword(pw) {
-  if (DEMO_MODE) return;
+  if (DEMO_MODE) { LS.set("demo_cred", { ...demoCred(), p: pw }); return; }
   const c = await sb();
   const { error } = await c.auth.updateUser({ password: pw });
   if (error) throw error;
@@ -318,5 +329,81 @@ export async function onAuthChange(cb) {
   c.auth.onAuthStateChange((ev, session) => cb(ev, session));
 }
 export function resetDemo() {
-  ["produtos", PK, "config", "pedidos"].forEach((k) => localStorage.removeItem("jss_" + k));
+  ["produtos", PK, "config", "pedidos", "feedbacks"].forEach((k) => localStorage.removeItem("jss_" + k));
+}
+
+// =============================================================
+//  Feedbacks
+//  status: pendente | aprovado | reprovado
+//  aparece no site quando status = aprovado E visivel = true
+// =============================================================
+// Exemplos SÓ do modo demonstração: são marcados como exemplo de propósito,
+// para não parecerem depoimentos reais de clientes.
+function demoFeedbacks() {
+  let f = LS.get("feedbacks", null);
+  if (!f) {
+    const d = (n) => new Date(Date.now() - n * 86400000).toISOString();
+    const ex = "Exemplo de depoimento. Quando suas clientes enviarem feedbacks pelo site e você aprovar no painel, eles aparecem aqui no lugar deste texto.";
+    f = [
+      { id: "fb-1", nome: "Cliente exemplo 1", cidade: "", nota: 5, texto: ex, status: "aprovado", visivel: true, created_at: d(1) },
+      { id: "fb-2", nome: "Cliente exemplo 2", cidade: "", nota: 5, texto: ex, status: "aprovado", visivel: true, created_at: d(2) },
+      { id: "fb-3", nome: "Cliente exemplo 3", cidade: "", nota: 4, texto: ex, status: "aprovado", visivel: true, created_at: d(3) },
+      { id: "fb-4", nome: "Cliente exemplo 4", cidade: "", nota: 5, texto: "Exemplo de feedback esperando aprovação no painel.", status: "pendente", visivel: false, created_at: d(0) },
+    ];
+    LS.set("feedbacks", f);
+  }
+  return f;
+}
+
+/** Loja: só aprovados e visíveis. Painel (admin=true): todos. */
+export async function listFeedbacks({ admin = false } = {}) {
+  if (DEMO_MODE) {
+    const all = demoFeedbacks().slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return admin ? all : all.filter((x) => x.status === "aprovado" && x.visivel);
+  }
+  const c = await sb();
+  let q = c.from("feedbacks").select("*").order("created_at", { ascending: false }).limit(admin ? 500 : 30);
+  if (!admin) q = q.eq("status", "aprovado").eq("visivel", true);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+/** Cliente envia pelo site: sempre entra como pendente e invisível. */
+export async function submitFeedback({ nome, cidade, nota, texto }) {
+  nome = String(nome || "").trim().slice(0, 80); texto = String(texto || "").trim().slice(0, 600);
+  cidade = String(cidade || "").trim().slice(0, 60); nota = Math.max(1, Math.min(5, parseInt(nota) || 5));
+  if (!nome || texto.length < 5) throw new Error("Preencha seu nome e escreva um comentário.");
+  if (DEMO_MODE) {
+    const f = demoFeedbacks();
+    f.unshift({ id: "fb-" + Date.now(), nome, cidade, nota, texto, status: "pendente", visivel: false, created_at: new Date().toISOString() });
+    LS.set("feedbacks", f); return;
+  }
+  const c = await sb();
+  const { error } = await c.rpc("enviar_feedback", { p_nome: nome, p_cidade: cidade, p_nota: nota, p_texto: texto });
+  if (error) throw error;
+}
+
+/** Painel: cria ou altera (status, visível, texto...). */
+export async function saveFeedback(fb) {
+  const row = { ...fb };
+  if (DEMO_MODE) {
+    const f = demoFeedbacks();
+    if (!row.id) { row.id = "fb-" + Date.now(); row.created_at = new Date().toISOString(); f.unshift(row); }
+    else { const i = f.findIndex((x) => x.id === row.id); f[i] = { ...f[i], ...row }; }
+    LS.set("feedbacks", f); return f.find((x) => x.id === row.id);
+  }
+  const c = await sb();
+  const id = row.id; delete row.id; delete row.created_at;
+  const res = id ? await c.from("feedbacks").update(row).eq("id", id).select().single()
+                 : await c.from("feedbacks").insert(row).select().single();
+  if (res.error) throw res.error;
+  return res.data;
+}
+
+export async function deleteFeedback(id) {
+  if (DEMO_MODE) { LS.set("feedbacks", demoFeedbacks().filter((x) => x.id !== id)); return; }
+  const c = await sb();
+  const { error } = await c.from("feedbacks").delete().eq("id", id);
+  if (error) throw error;
 }

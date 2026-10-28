@@ -1,5 +1,5 @@
-import { listProducts, stockTotal, finalPrice, DEMO_HERO } from "./data.js";
-import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, $, $$, esc, brl, icon, waIcon } from "./ui.js";
+import { listProducts, stockTotal, finalPrice, DEMO_HERO, listFeedbacks, submitFeedback } from "./data.js";
+import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, modal, closeModal, toast, $, $$, esc, brl, icon, waIcon } from "./ui.js";
 
 const cfg = await initPage("/");
 
@@ -91,5 +91,72 @@ else {
     tick(); setInterval(tick, 1000);
   }
 }
+
+// ---------- feedbacks (carrossel) ----------
+const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg>';
+const starsHtml = (n) => `<span class="stars">${[1, 2, 3, 4, 5].map((i) => STAR.replace("<svg", `<svg class="${i <= n ? "on" : ""}"`)).join("")}</span>`;
+let fbs = [];
+try { fbs = await listFeedbacks(); } catch (e) { console.error(e); }
+const track = $("#fb-track");
+if (!fbs.length) {
+  track.innerHTML = `<div class="fb-empty">${icon("heart")}<p>Seja a primeira a contar como foi sua experiência com a JS STORE.</p></div>`;
+  $("#fb-nav").classList.add("hidden");
+} else {
+  track.innerHTML = fbs.map((f, i) => `<figure class="fb-item" data-i="${i}">
+    <svg class="fb-quote" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 6C4.4 7.3 3 9.6 3 12.8V18h6v-6H6c0-1.9.8-3.3 2.4-4.1zm10 0c-2.8 1.3-4.2 3.6-4.2 6.8V18h6v-6h-3c0-1.9.8-3.3 2.4-4.1z"/></svg>
+    ${starsHtml(f.nota)}
+    <blockquote>${esc(f.texto)}</blockquote>
+    <figcaption><span class="fb-av">${esc((f.nome || "?").trim().charAt(0).toUpperCase())}</span><span><b>${esc(f.nome)}</b>${f.cidade ? `<small>${esc(f.cidade)}</small>` : ""}</span></figcaption>
+  </figure>`).join("");
+  // pontinhos + avanço automático suave (pausa quando a pessoa interage)
+  const items = $$(".fb-item", track);
+  const dots = $("#fb-dots");
+  dots.innerHTML = items.map((_, i) => `<button aria-label="Feedback ${i + 1}" data-dot="${i}"></button>`).join("");
+  const step = () => (items[1] ? items[1].offsetLeft - items[0].offsetLeft : track.clientWidth);
+  const current = () => Math.round(track.scrollLeft / step());
+  const perView = () => Math.max(1, Math.round(track.clientWidth / step()));
+  const go = (i) => {
+    const max = Math.max(0, items.length - perView());
+    if (i > max) i = 0; if (i < 0) i = max;
+    track.scrollTo({ left: i * step(), behavior: "smooth" });
+  };
+  const paint = () => { const c = current(); $$("button", dots).forEach((d, i) => d.classList.toggle("on", i >= c && i < c + perView())); };
+  track.addEventListener("scroll", () => requestAnimationFrame(paint), { passive: true }); paint();
+  $$("[data-fb]").forEach((b) => b.addEventListener("click", () => { go(current() + +b.dataset.fb); pause(); }));
+  dots.addEventListener("click", (e) => { const d = e.target.closest("[data-dot]"); if (d) { go(+d.dataset.dot); pause(); } });
+  let timer = null, resume = null;
+  const start = () => { if (matchMedia("(prefers-reduced-motion: reduce)").matches || items.length <= perView()) return; clearInterval(timer); timer = setInterval(() => go(current() + 1), 5500); };
+  const pause = () => { clearInterval(timer); clearTimeout(resume); resume = setTimeout(start, 9000); };
+  ["pointerdown", "touchstart", "wheel"].forEach((ev) => track.addEventListener(ev, pause, { passive: true }));
+  track.addEventListener("mouseenter", () => clearInterval(timer)); track.addEventListener("mouseleave", start);
+  new IntersectionObserver(([e]) => (e.isIntersecting ? start() : clearInterval(timer))).observe(track);
+}
+
+// formulário de feedback (entra como pendente; a loja aprova no painel)
+$("#fb-open").addEventListener("click", () => {
+  modal(`<h3>Conte como foi</h3><p class="muted" style="margin:0 0 16px">Seu feedback ajuda outras clientes. Ele aparece no site depois que a loja revisar.</p>
+    <form id="fbf">
+      <div class="field"><label for="fn">Seu nome *</label><input class="input" id="fn" maxlength="80" required autocomplete="given-name"></div>
+      <div class="field"><label for="fc">Cidade</label><input class="input" id="fc" maxlength="60" autocomplete="address-level2"></div>
+      <div class="field"><label>Sua nota</label><div class="star-pick" id="fs">${[1, 2, 3, 4, 5].map((i) => `<button type="button" data-n="${i}" class="on" aria-label="${i} estrela(s)">${STAR}</button>`).join("")}</div></div>
+      <div class="field"><label for="ft">Comentário *</label><textarea class="textarea" id="ft" maxlength="600" required placeholder="O que você achou das peças e do atendimento?"></textarea></div>
+      <input type="text" id="fhp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+      <button class="btn btn-gold btn-block" id="fsend">Enviar feedback</button>
+    </form>`, {
+    onOpen(m) {
+      let nota = 5;
+      m.querySelector("#fs").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; nota = +b.dataset.n; m.querySelectorAll("#fs button").forEach((x) => x.classList.toggle("on", +x.dataset.n <= nota)); });
+      m.querySelector("#fbf").onsubmit = async (e) => {
+        e.preventDefault();
+        if (m.querySelector("#fhp").value) { closeModal(); return; } // robô
+        const btn = m.querySelector("#fsend"); btn.disabled = true; btn.textContent = "Enviando...";
+        try {
+          await submitFeedback({ nome: m.querySelector("#fn").value, cidade: m.querySelector("#fc").value, nota, texto: m.querySelector("#ft").value });
+          closeModal(); toast("Obrigada! Seu feedback foi enviado e será revisado pela loja.", { ic: "heart", ms: 5000 });
+        } catch (er) { toast(er.message || "Não foi possível enviar agora.", { err: true }); btn.disabled = false; btn.textContent = "Enviar feedback"; }
+      };
+    },
+  });
+});
 
 observeReveal();

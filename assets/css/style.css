@@ -630,3 +630,67 @@ html.theme-switching ::view-transition-new(root) { animation: themeReveal .7s va
 @keyframes flap { 0%, 70%, 100% { transform: scaleX(1); } 80% { transform: scaleX(.55); } 90% { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .bfly-ic .w { animation: none; } }
 @media (max-width: 640px) { .footer { padding-bottom: 110px; } }
+
+/* =============================================================
+   Feedbacks (carrossel)
+   ============================================================= */
+.fb-section { padding-top: 70px; }
+.fb-track { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 44px) / 3); gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 6px 2px 10px; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.fb-track::-webkit-scrollbar { display: none; }
+.fb-item { position: relative; margin: 0; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 28px 26px 24px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
+.fb-item::after { content: ""; position: absolute; inset: auto -40px -60px auto; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(201, 134, 114, .16), transparent 70%); pointer-events: none; }
+.fb-quote { position: absolute; right: 22px; top: 18px; width: 44px; height: 44px; fill: var(--blush-200); opacity: .8; }
+.fb-item blockquote { margin: 0; font-family: var(--display); font-size: 21px; line-height: 1.35; color: var(--text); flex: 1; }
+.fb-item figcaption { display: flex; align-items: center; gap: 12px; }
+.fb-item figcaption b { display: block; font-weight: 600; font-size: 15px; }
+.fb-item figcaption small { color: var(--ink-3); font-size: 13px; }
+.fb-av { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--gold-grad); color: #fff; font-weight: 600; font-size: 17px; flex: 0 0 auto; }
+.stars { display: inline-flex; gap: 3px; }
+.stars svg { width: 18px; height: 18px; fill: var(--line); }
+.stars svg.on { fill: #e2a24a; }
+.fb-dots { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
+.fb-dots button { width: 8px; height: 8px; border-radius: 4px; border: 0; padding: 0; background: var(--line); transition: width .5s var(--ease), background .4s; }
+.fb-dots button.on { width: 26px; background: var(--rose); }
+.fb-empty { grid-column: 1 / -1; text-align: center; padding: 34px 20px; border: 1.5px dashed var(--blush-300); border-radius: 22px; color: var(--ink-2); }
+.fb-empty svg { width: 30px; height: 30px; color: var(--rose); }
+.fb-empty p { margin: 8px 0 0; }
+.star-pick { display: flex; gap: 4px; }
+.star-pick button { border: 0; background: none; padding: 2px; transition: transform .25s var(--ease); }
+.star-pick svg { width: 32px; height: 32px; fill: var(--line); transition: fill .2s; }
+.star-pick button.on svg { fill: #e2a24a; }
+:root[data-theme="dark"] .fb-quote { fill: rgba(201, 134, 114, .35); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fb-quote { fill: rgba(201, 134, 114, .35); } }
+@media (max-width: 1024px) { .fb-track { grid-auto-columns: calc((100% - 22px) / 2); } }
+@media (max-width: 640px) { .fb-track { grid-auto-columns: 86%; gap: 12px; } .fb-item blockquote { font-size: 19px; } }
+
+/* =============================================================
+   Celular / iPhone: nada cresce ou encolhe sozinho
+   ============================================================= */
+html { -webkit-tap-highlight-color: transparent; touch-action: manipulation; } /* sem zoom de toque duplo */
+@media (hover: none), (pointer: coarse) {
+  /* no toque o iPhone "prende" o efeito de passar o mouse; aqui ele é desligado */
+  .card:hover .card-media img, .card:active .card-media img { transform: none; }
+  .card:hover .card-media img.alt.is-loaded { opacity: 0; }
+  .btn:hover, .trust div:hover, .cat:hover, .contact-card:hover, .fav:hover, .sf:hover, .brand:hover img, .kpi:hover, .fb-card:hover { transform: none; }
+  .btn:hover { box-shadow: none; }
+  .btn:hover::before { transform: translateX(-120%); }
+  .contact-card:hover { color: inherit; box-shadow: none; }
+  .contact-card:hover::before { opacity: 0; }
+  .contact-card:hover small { color: var(--ink-3); }
+  .contact-card.wa:hover .cc-ic { background: #25d366; } .contact-card.ig:hover .cc-ic { background: var(--ig-grad); } .contact-card.map:hover .cc-ic { background: var(--rose); } .contact-card.vip:hover .cc-ic { background: var(--wine); }
+  .contact-card:hover .cc-go { transform: none; }
+  .card-media img { transition: opacity .7s var(--ease); }
+  .reveal { transform: none; transition: opacity .8s var(--ease); }  /* só aparece, sem deslizar */
+  .btn:active, .cat:active, .size:active, .sf:active { transform: scale(.97); }
+}
+@media (max-width: 860px) {
+  /* o iPhone dá zoom sozinho em campos com letra menor que 16px */
+  input, select, textarea, .pill-select { font-size: 16px !important; }
+}
+/* zoom da foto: só dentro da página do produto, ao tocar na foto */
+.main-img { touch-action: pan-y; }
+.main-img.zoom { touch-action: none; cursor: zoom-out; }
+.main-img img { transition: transform .45s var(--ease), opacity .6s var(--ease); }
+.zoom-hint { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; background: var(--glass); color: var(--text); font-size: 12.5px; padding: 6px 12px; border-radius: 999px; pointer-events: none; transition: opacity .3s; }
+.zoom-hint svg { width: 15px; height: 15px; }
+.main-img.zoom .zoom-hint { opacity: 0; }

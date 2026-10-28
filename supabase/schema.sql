@@ -172,6 +172,37 @@ end $$;
 grant execute on function public.atualizar_status_pedido(bigint, text) to authenticated;
 grant execute on function public.is_admin() to anon, authenticated;
 
+-- ---------- Feedbacks ----------
+create table if not exists public.feedbacks (
+  id bigint generated always as identity primary key,
+  nome text not null,
+  cidade text default '',
+  nota smallint not null default 5 check (nota between 1 and 5),
+  texto text not null,
+  status text not null default 'pendente' check (status in ('pendente','aprovado','reprovado')),
+  visivel boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists feedbacks_site_idx on public.feedbacks (status, visivel, created_at desc);
+alter table public.feedbacks enable row level security;
+
+drop policy if exists "feedbacks_le_site" on public.feedbacks;
+create policy "feedbacks_le_site" on public.feedbacks for select using ((status = 'aprovado' and visivel) or public.is_admin());
+drop policy if exists "feedbacks_admin" on public.feedbacks;
+create policy "feedbacks_admin" on public.feedbacks for all using (public.is_admin()) with check (public.is_admin());
+
+-- Cliente envia pelo site: sempre entra pendente e invisível
+create or replace function public.enviar_feedback(p_nome text, p_cidade text, p_nota int, p_texto text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if coalesce(trim(p_nome), '') = '' or length(trim(coalesce(p_texto, ''))) < 5 then
+    raise exception 'Preencha seu nome e escreva um comentário.';
+  end if;
+  insert into public.feedbacks (nome, cidade, nota, texto, status, visivel)
+  values (left(trim(p_nome), 80), left(trim(coalesce(p_cidade, '')), 60), greatest(1, least(5, coalesce(p_nota, 5))), left(trim(p_texto), 600), 'pendente', false);
+end $$;
+grant execute on function public.enviar_feedback(text, text, int, text) to anon, authenticated;
+
 -- ---------- Fotos (Storage) ----------
 insert into storage.buckets (id, name, public)
 values ('produtos', 'produtos', true)
@@ -187,8 +218,10 @@ drop policy if exists "fotos_apaga" on storage.objects;
 create policy "fotos_apaga" on storage.objects for delete using (bucket_id = 'produtos' and public.is_admin());
 
 -- =============================================================
---  ÚLTIMO PASSO: libere o e-mail da sua cliente no painel.
---  1) Supabase > Authentication > Users > Add user (e-mail + senha)
---  2) Troque o e-mail abaixo e rode só esta linha:
--- insert into public.admins (email) values ('email-da-cliente@exemplo.com');
+--  ÚLTIMO PASSO: libere quem entra no painel.
+--  O login "admin" do painel corresponde ao e-mail admin@jsstore.local.
+--  1) Supabase > Authentication > Users > Add user > e-mail admin@jsstore.local,
+--     uma senha forte e "Auto Confirm User"
+--  2) Rode esta linha:
+-- insert into public.admins (email) values ('admin@jsstore.local');
 -- =============================================================

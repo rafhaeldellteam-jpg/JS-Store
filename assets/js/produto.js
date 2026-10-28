@@ -90,10 +90,27 @@ function render() {
     mimg.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 300 });
     mimg.src = imgs[+b.dataset.img];
   });
-  if (matchMedia("(hover:hover)").matches) {
-    main.addEventListener("mousemove", (e) => { const r = main.getBoundingClientRect(); mimg.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`; });
+  const origin = (x, y) => { const r = main.getBoundingClientRect(); mimg.style.transformOrigin = `${Math.max(0, Math.min(100, ((x - r.left) / r.width) * 100))}% ${Math.max(0, Math.min(100, ((y - r.top) / r.height) * 100))}%`; };
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    // computador: zoom acompanhando o mouse
+    main.addEventListener("mousemove", (e) => origin(e.clientX, e.clientY));
     main.addEventListener("mouseenter", () => main.classList.add("zoom"));
     main.addEventListener("mouseleave", () => main.classList.remove("zoom"));
+  } else {
+    // celular: toque na foto para ampliar, arraste para ver detalhes, toque de novo para voltar
+    main.insertAdjacentHTML("beforeend", `<span class="zoom-hint">${icon("search")} Toque para ampliar</span>`);
+    let moved = false;
+    main.addEventListener("click", (e) => {
+      if (moved) { moved = false; return; }
+      if (!main.classList.contains("zoom")) origin(e.clientX, e.clientY);
+      main.classList.toggle("zoom");
+    });
+    main.addEventListener("touchmove", (e) => {
+      if (!main.classList.contains("zoom")) return;
+      e.preventDefault(); moved = true;
+      const t = e.touches[0]; origin(t.clientX, t.clientY);
+    }, { passive: false });
+    main.addEventListener("touchend", () => setTimeout(() => (moved = false), 50));
   }
 
   // relacionados
