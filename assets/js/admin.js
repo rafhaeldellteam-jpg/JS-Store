@@ -73,7 +73,7 @@ async function loadAll() {
 // ---------------- login ----------------
 function loginView(msg = "") {
   app.innerHTML = `<div class="login"><div class="login-box">
-    <img src="/assets/img/logo-full.webp" alt="JS STORE">
+    <img class="logo-l" src="/assets/img/logo-full.webp" alt="JS STORE"><img class="logo-d" src="/assets/img/logo-full-dark.webp" alt="">
     <h1>Área da loja</h1><p class="muted" style="margin:0">Entre para gerenciar seus produtos</p>
     <form id="login-f">
       <div class="field"><label for="em">Usuário</label><input class="input" id="em" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
@@ -91,7 +91,7 @@ function loginView(msg = "") {
   };
 }
 function noAccessView(user) {
-  app.innerHTML = `<div class="login"><div class="login-box"><img src="/assets/img/logo-full.webp" alt="JS STORE">
+  app.innerHTML = `<div class="login"><div class="login-box"><img class="logo-l" src="/assets/img/logo-full.webp" alt="JS STORE"><img class="logo-d" src="/assets/img/logo-full-dark.webp" alt="">
   <h1>Sem permissão</h1><p class="muted">O usuário <b>${esc(String(user.email).replace("@" + db.ADMIN_DOMAIN, ""))}</b> entrou, mas ainda não foi liberado como administrador.</p>
   <button class="btn btn-ghost btn-block" id="lo">Sair</button></div></div>`;
   $("#lo").onclick = async () => { await db.logout(); location.reload(); };
@@ -108,7 +108,7 @@ function shell(active, title, sub, content, actions = "") {
   const pill = (k) => (k === "pedidos" && pend ? `<span class="pill">${pend}</span>` : k === "feedbacks" && fbPend ? `<span class="pill">${fbPend}</span>` : k === "mais" && fbPend ? `<span class="pill">${fbPend}</span>` : "");
   app.innerHTML = `<div class="shell">
     <aside class="side">
-      <a class="brand" href="/" target="_blank"><img src="/assets/img/butterfly.webp" alt="" width="40"><span><b>JS STORE</b><small>PAINEL</small></span></a>
+      <a class="brand" href="/" target="_blank"><img class="logo-l" src="/assets/img/butterfly.webp" alt="" width="40"><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt="" width="40"><span><b>JS STORE</b><small>PAINEL</small></span></a>
       ${NAV.map(([k, t, i]) => `<a class="nav-i ${active === k ? "on" : ""}" href="#${k}">${ic(i)} ${t}${pill(k)}</a>`).join("")}
       <div class="bottom">
         <a class="nav-i theme-btn" href="#" data-theme-toggle>${themeIcons()} Modo claro/escuro</a>
@@ -679,7 +679,8 @@ function feedbacksView() {
       <div class="fb-card ${f.status}" data-id="${esc(f.id)}">
         <div class="fb-top">${stars(f.nota)}<span class="st ${f.status === "aprovado" ? "entregue" : f.status === "reprovado" ? "cancelado" : "pendente"}">${FB_STATUS[f.status]}</span></div>
         <p class="fb-text">${esc(f.texto)}</p>
-        <div class="fb-who"><b>${esc(f.nome)}</b>${f.cidade ? ` · ${esc(f.cidade)}` : ""}<small>${fmtDate(f.created_at)}</small></div>
+        ${f.fotos?.length ? `<div class="fb-photos">${f.fotos.map((u, k) => `<a href="${esc(u)}" target="_blank" rel="noopener" title="Abrir foto"><img src="${esc(u)}" alt=""></a>`).join("")}</div>` : ""}
+        <div class="fb-who"><b>${esc(f.nome)}</b>${f.cidade ? ` · ${esc(f.cidade)}` : ""}${f.instagram ? ` · <a class="fb-ig" href="https://instagram.com/${encodeURIComponent(f.instagram)}" target="_blank" rel="noopener">@${esc(f.instagram)}</a>` : ""}<small>${fmtDate(f.created_at)}</small></div>
         <div class="fb-actions">
           ${f.status !== "aprovado" ? `<button class="btn btn-sm fb-ok" data-act="aprovar">${ic("thumbUp")} Aprovar</button>` : ""}
           ${f.status !== "reprovado" ? `<button class="btn btn-ghost btn-sm" data-act="reprovar">${ic("thumbDown")} Reprovar</button>` : ""}
@@ -724,23 +725,40 @@ function updatePills() {
 
 /** Adicionar (ex.: elogio recebido no WhatsApp) ou editar um feedback. */
 function feedbackModal(f, onDone) {
-  const v = f || { nome: "", cidade: "", nota: 5, texto: "", status: "aprovado", visivel: true };
+  const v = f || { nome: "", cidade: "", instagram: "", fotos: [], nota: 5, texto: "", status: "aprovado", visivel: true };
+  let fotos = [...(v.fotos || [])];
   modal(`<h3>${f ? "Editar feedback" : "Adicionar feedback"}</h3>
     <p class="muted" style="margin:0 0 16px">${f ? "Ajuste o texto se precisar corrigir algum erro de digitação." : "Use para registrar um elogio que a cliente mandou no WhatsApp ou Instagram (com a permissão dela)."}</p>
     <form id="fbf">
       <div class="row2"><div class="field"><label for="fn">Nome *</label><input class="input" id="fn" maxlength="80" required value="${esc(v.nome)}"></div>
       <div class="field"><label for="fc">Cidade</label><input class="input" id="fc" maxlength="60" value="${esc(v.cidade)}"></div></div>
       <div class="field"><label>Nota</label><div class="star-pick" id="fs">${[1, 2, 3, 4, 5].map((i) => `<button type="button" data-n="${i}" class="${i <= v.nota ? "on" : ""}" aria-label="${i} estrela(s)"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"/></svg></button>`).join("")}</div></div>
+      <div class="field"><label for="fig">Instagram <span class="hint">(opcional)</span></label><input class="input" id="fig" maxlength="40" value="${esc(v.instagram || "")}" placeholder="@perfil"></div>
       <div class="field"><label for="ft">Comentário *</label><textarea class="textarea" id="ft" maxlength="600" required>${esc(v.texto)}</textarea></div>
+      <div class="field"><label>Fotos <span class="hint">(opcional, até ${db.FEEDBACK_MAX_FOTOS} · remova se não quiser mostrar no site)</span></label>
+        <div class="fb-pick" id="fpick"><label class="fb-add" id="fadd">${ic("plus")}<span>Adicionar foto</span><input type="file" id="ffile" accept="image/*" multiple hidden></label></div></div>
       ${f ? "" : `<label class="switch" style="margin-bottom:16px"><input type="checkbox" id="fv" checked><i></i> Aprovar e mostrar no site</label>`}
       <button class="btn btn-gold btn-block">Salvar</button>
     </form>`, {
     onOpen(m) {
       let nota = v.nota;
+      const drawPick = () => {
+        m.querySelectorAll("#fpick .fb-thumb").forEach((x) => x.remove());
+        m.querySelector("#fadd").insertAdjacentHTML("beforebegin", fotos.map((u, i) => `<div class="fb-thumb"><img src="${esc(u)}" alt=""><button type="button" data-rmf="${i}" aria-label="Remover foto">${ic("x")}</button></div>`).join(""));
+        m.querySelector("#fadd").classList.toggle("hidden", fotos.length >= db.FEEDBACK_MAX_FOTOS);
+      };
+      drawPick();
+      m.querySelector("#fpick").addEventListener("click", (e) => { const b = e.target.closest("[data-rmf]"); if (b) { fotos.splice(+b.dataset.rmf, 1); drawPick(); } });
+      m.querySelector("#ffile").addEventListener("change", async (e) => {
+        for (const file of [...e.target.files].slice(0, db.FEEDBACK_MAX_FOTOS - fotos.length)) {
+          try { fotos.push(await db.uploadFeedbackPhoto(file)); drawPick(); } catch (er) { toast(errMsg(er), { err: true }); }
+        }
+        e.target.value = "";
+      });
       m.querySelector("#fs").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; nota = +b.dataset.n; m.querySelectorAll("#fs button").forEach((x) => x.classList.toggle("on", +x.dataset.n <= nota)); });
       m.querySelector("#fbf").onsubmit = async (e) => {
         e.preventDefault();
-        const row = { nome: m.querySelector("#fn").value.trim(), cidade: m.querySelector("#fc").value.trim(), nota, texto: m.querySelector("#ft").value.trim() };
+        const row = { nome: m.querySelector("#fn").value.trim(), cidade: m.querySelector("#fc").value.trim(), instagram: db.cleanInstagram(m.querySelector("#fig").value), fotos, nota, texto: m.querySelector("#ft").value.trim() };
         if (!row.nome || row.texto.length < 5) { toast("Preencha o nome e o comentário.", { err: true }); return; }
         if (f) row.id = f.id;
         else { const on = m.querySelector("#fv").checked; row.status = on ? "aprovado" : "pendente"; row.visivel = on; }

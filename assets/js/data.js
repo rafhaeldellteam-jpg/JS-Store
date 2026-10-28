@@ -369,24 +369,49 @@ export async function listFeedbacks({ admin = false } = {}) {
   return data || [];
 }
 
-/** Cliente envia pelo site: sempre entra como pendente e invisível. */
-export async function submitFeedback({ nome, cidade, nota, texto }) {
+/** Limpa o @ do Instagram: só letras, números, ponto e _ (máx. 30). */
+export const cleanInstagram = (v) => String(v || "").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@+/, "").replace(/[/?#].*$/, "").replace(/[^A-Za-z0-9._]/g, "").slice(0, 30);
+export const FEEDBACK_MAX_FOTOS = 3;
+
+/** Foto enviada pela cliente junto com o feedback (opcional). */
+export async function uploadFeedbackPhoto(file) {
+  if (!file.type.startsWith("image/")) throw new Error("Envie apenas imagens.");
+  if (DEMO_MODE) {
+    const blob = await compressImage(file, 600, 0.72);
+    return await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+  }
+  const blob = await compressImage(file, 1200, 0.82);
+  const c = await sb();
+  const path = `${new Date().getFullYear()}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.webp`;
+  const { error } = await c.storage.from("feedbacks").upload(path, blob, { contentType: "image/webp", cacheControl: "31536000" });
+  if (error) throw new Error("Não foi possível enviar a foto. Tente uma imagem menor.");
+  return c.storage.from("feedbacks").getPublicUrl(path).data.publicUrl;
+}
+
+/** Cliente envia pelo site: sempre entra como pendente e invisível.
+ *  instagram e fotos (arquivos) são opcionais. */
+export async function submitFeedback({ nome, cidade, nota, texto, instagram = "", fotos = [] }) {
   nome = String(nome || "").trim().slice(0, 80); texto = String(texto || "").trim().slice(0, 600);
   cidade = String(cidade || "").trim().slice(0, 60); nota = Math.max(1, Math.min(5, parseInt(nota) || 5));
+  instagram = cleanInstagram(instagram);
   if (!nome || texto.length < 5) throw new Error("Preencha seu nome e escreva um comentário.");
+  const urls = [];
+  for (const f of [...fotos].slice(0, FEEDBACK_MAX_FOTOS)) urls.push(await uploadFeedbackPhoto(f));
   if (DEMO_MODE) {
     const f = demoFeedbacks();
-    f.unshift({ id: "fb-" + Date.now(), nome, cidade, nota, texto, status: "pendente", visivel: false, created_at: new Date().toISOString() });
+    f.unshift({ id: "fb-" + Date.now(), nome, cidade, nota, texto, instagram, fotos: urls, status: "pendente", visivel: false, created_at: new Date().toISOString() });
     LS.set("feedbacks", f); return;
   }
   const c = await sb();
-  const { error } = await c.rpc("enviar_feedback", { p_nome: nome, p_cidade: cidade, p_nota: nota, p_texto: texto });
+  const { error } = await c.rpc("enviar_feedback", { p_nome: nome, p_cidade: cidade, p_nota: nota, p_texto: texto, p_instagram: instagram, p_fotos: urls });
   if (error) throw error;
 }
 
 /** Painel: cria ou altera (status, visível, texto...). */
 export async function saveFeedback(fb) {
   const row = { ...fb };
+  if ("instagram" in row) row.instagram = cleanInstagram(row.instagram);
+  if ("fotos" in row) row.fotos = (row.fotos || []).slice(0, FEEDBACK_MAX_FOTOS);
   if (DEMO_MODE) {
     const f = demoFeedbacks();
     if (!row.id) { row.id = "fb-" + Date.now(); row.created_at = new Date().toISOString(); f.unshift(row); }

@@ -32,6 +32,7 @@ const P = {
   pointer: '<path d="M12 19V5M5 12l7-7 7 7"/>',
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   arrow: '<path d="M5 12h14M13 5l7 7-7 7"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
   star: '<path d="M11.52 2.3a.53.53 0 0 1 .95 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.01a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .3-.9l5.16-.76a2.12 2.12 0 0 0 1.6-1.16z"/>',
@@ -218,7 +219,7 @@ function renderCart() {
   const items = cart.items();
   const cfg = state.config || {};
   if (!items.length) {
-    body.innerHTML = `<div class="empty"><img src="/assets/img/butterfly.webp" alt=""><p>Sua sacola está vazia.</p><a class="btn btn-ghost btn-sm" href="/loja">Ver novidades</a></div>`;
+    body.innerHTML = `<div class="empty"><img class="logo-l" src="/assets/img/butterfly.webp" alt=""><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt=""><p>Sua sacola está vazia.</p><a class="btn btn-ghost btn-sm" href="/loja">Ver novidades</a></div>`;
     foot.classList.add("hidden"); return;
   }
   foot.classList.remove("hidden");
@@ -250,7 +251,7 @@ function renderFavs() {
     <div class="line-item"><a href="/produto?p=${encodeURIComponent(i.slug)}"><img src="${esc(i.img)}" alt=""></a>
     <div><h5>${esc(i.nome)}</h5><small>${brl(i.preco)}</small><a class="btn btn-ghost btn-sm" style="margin-top:10px" href="/produto?p=${encodeURIComponent(i.slug)}">Escolher tamanho</a></div>
     <button class="icon-btn" data-unfav="${esc(i.id)}" aria-label="Remover">${icon("x")}</button></div>`).join("")
-    : `<div class="empty"><img src="/assets/img/butterfly.webp" alt=""><p>Toque no ${icon("heart", "inline-ic")} das peças que você amar para salvar aqui.</p></div>`;
+    : `<div class="empty"><img class="logo-l" src="/assets/img/butterfly.webp" alt=""><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt=""><p>Toque no ${icon("heart", "inline-ic")} das peças que você amar para salvar aqui.</p></div>`;
 }
 
 // ---------- cartão de produto ----------
@@ -301,7 +302,7 @@ function layout(cfg, active) {
   const mq = avisos.length ? avisos.map((a) => `<span>${esc(a)}</span>`).join("") : "";
   const links = [["/", "Início"], ["/loja", "Loja"], ["/loja?f=novidades", "Novidades"], ["/loja?f=promo", "Promoções"]];
   const nav = links.map(([h, t]) => `<a href="${h}" class="${active === h ? "active" : ""}">${t}</a>`).join("");
-  const brand = `<a class="brand" href="/" aria-label="JS STORE - início"><img src="/assets/img/butterfly.webp" alt="" width="44" height="34"><span><b>JS STORE</b><small>MODA FEMININA</small></span></a>`;
+  const brand = `<a class="brand" href="/" aria-label="JS STORE - início"><img class="logo-l" src="/assets/img/butterfly.webp" alt="" width="44" height="34"><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt="" width="44" height="34"><span><b>JS STORE</b><small>MODA FEMININA</small></span></a>`;
   const header = `
   ${mq ? `<div class="topbar"><div class="marquee">${mq}${mq}${mq}${mq}</div></div>` : ""}
   <header class="header" id="header"><div class="wrap header-in">

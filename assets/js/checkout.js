@@ -28,7 +28,7 @@ async function whatsappCheckout({ cfg, items, onDone }) {
   const pix = Number(cfg.pix_desconto) || 0;
 
   modal(`
-    <h3 class="h-ic"><img src="/assets/img/butterfly.webp" alt="" width="34"> Quase lá!</h3>
+    <h3 class="h-ic"><img class="logo-l" src="/assets/img/butterfly.webp" alt="" width="34"><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt="" width="34"> Quase lá!</h3>
     <p class="muted" style="margin:0 0 18px">Preencha rapidinho e seu pedido vai prontinho para o WhatsApp da loja.</p>
     <form id="co-form">
       <div class="field"><label for="co-nome">Seu nome *</label><input class="input" id="co-nome" required maxlength="120" value="${escH(saved.nome || "")}" autocomplete="name"></div>

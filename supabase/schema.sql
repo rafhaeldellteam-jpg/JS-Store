@@ -183,6 +183,9 @@ create table if not exists public.feedbacks (
   visivel boolean not null default false,
   created_at timestamptz not null default now()
 );
+-- campos opcionais: @ do Instagram e fotos do produto enviadas pela cliente
+alter table public.feedbacks add column if not exists instagram text default '';
+alter table public.feedbacks add column if not exists fotos text[] not null default '{}';
 create index if not exists feedbacks_site_idx on public.feedbacks (status, visivel, created_at desc);
 alter table public.feedbacks enable row level security;
 
@@ -192,16 +195,25 @@ drop policy if exists "feedbacks_admin" on public.feedbacks;
 create policy "feedbacks_admin" on public.feedbacks for all using (public.is_admin()) with check (public.is_admin());
 
 -- Cliente envia pelo site: sempre entra pendente e invisível
-create or replace function public.enviar_feedback(p_nome text, p_cidade text, p_nota int, p_texto text)
+drop function if exists public.enviar_feedback(text, text, int, text);
+create or replace function public.enviar_feedback(p_nome text, p_cidade text, p_nota int, p_texto text,
+                                                  p_instagram text default '', p_fotos text[] default '{}')
 returns void language plpgsql security definer set search_path = public as $$
+declare v_ig text; v_foto text;
 begin
   if coalesce(trim(p_nome), '') = '' or length(trim(coalesce(p_texto, ''))) < 5 then
     raise exception 'Preencha seu nome e escreva um comentário.';
   end if;
-  insert into public.feedbacks (nome, cidade, nota, texto, status, visivel)
-  values (left(trim(p_nome), 80), left(trim(coalesce(p_cidade, '')), 60), greatest(1, least(5, coalesce(p_nota, 5))), left(trim(p_texto), 600), 'pendente', false);
+  if coalesce(array_length(p_fotos, 1), 0) > 3 then raise exception 'Envie no máximo 3 fotos.'; end if;
+  foreach v_foto in array coalesce(p_fotos, '{}') loop
+    if v_foto not like 'https://%/storage/v1/object/public/feedbacks/%' then raise exception 'Foto inválida.'; end if;
+  end loop;
+  v_ig := left(regexp_replace(coalesce(p_instagram, ''), '[^A-Za-z0-9._]', '', 'g'), 30);
+  insert into public.feedbacks (nome, cidade, nota, texto, instagram, fotos, status, visivel)
+  values (left(trim(p_nome), 80), left(trim(coalesce(p_cidade, '')), 60), greatest(1, least(5, coalesce(p_nota, 5))),
+          left(trim(p_texto), 600), v_ig, coalesce(p_fotos, '{}'), 'pendente', false);
 end $$;
-grant execute on function public.enviar_feedback(text, text, int, text) to anon, authenticated;
+grant execute on function public.enviar_feedback(text, text, int, text, text, text[]) to anon, authenticated;
 
 -- ---------- Fotos (Storage) ----------
 insert into storage.buckets (id, name, public)
@@ -216,6 +228,18 @@ drop policy if exists "fotos_altera" on storage.objects;
 create policy "fotos_altera" on storage.objects for update using (bucket_id = 'produtos' and public.is_admin());
 drop policy if exists "fotos_apaga" on storage.objects;
 create policy "fotos_apaga" on storage.objects for delete using (bucket_id = 'produtos' and public.is_admin());
+
+-- ---------- Fotos dos feedbacks (enviadas pelas clientes) ----------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('feedbacks', 'feedbacks', true, 3145728, array['image/webp', 'image/jpeg', 'image/png'])
+on conflict (id) do update set public = true, file_size_limit = 3145728, allowed_mime_types = array['image/webp', 'image/jpeg', 'image/png'];
+
+drop policy if exists "fb_fotos_le" on storage.objects;
+create policy "fb_fotos_le" on storage.objects for select using (bucket_id = 'feedbacks');
+drop policy if exists "fb_fotos_envia" on storage.objects;
+create policy "fb_fotos_envia" on storage.objects for insert to anon, authenticated with check (bucket_id = 'feedbacks');
+drop policy if exists "fb_fotos_apaga" on storage.objects;
+create policy "fb_fotos_apaga" on storage.objects for delete using (bucket_id = 'feedbacks' and public.is_admin());
 
 -- =============================================================
 --  ÚLTIMO PASSO: libere quem entra no painel.

@@ -1,4 +1,4 @@
-import { listProducts, stockTotal, finalPrice, DEMO_HERO, listFeedbacks, submitFeedback } from "./data.js";
+import { listProducts, stockTotal, finalPrice, DEMO_HERO, listFeedbacks, submitFeedback, cleanInstagram, FEEDBACK_MAX_FOTOS } from "./data.js";
 import { initPage, state, productCard, skeletonCards, observeReveal, recent, contactLinks, modal, closeModal, toast, $, $$, esc, brl, icon, waIcon } from "./ui.js";
 
 const cfg = await initPage("/");
@@ -106,7 +106,8 @@ if (!fbs.length) {
     <svg class="fb-quote" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 6C4.4 7.3 3 9.6 3 12.8V18h6v-6H6c0-1.9.8-3.3 2.4-4.1zm10 0c-2.8 1.3-4.2 3.6-4.2 6.8V18h6v-6h-3c0-1.9.8-3.3 2.4-4.1z"/></svg>
     ${starsHtml(f.nota)}
     <blockquote>${esc(f.texto)}</blockquote>
-    <figcaption><span class="fb-av">${esc((f.nome || "?").trim().charAt(0).toUpperCase())}</span><span><b>${esc(f.nome)}</b>${f.cidade ? `<small>${esc(f.cidade)}</small>` : ""}</span></figcaption>
+    ${f.fotos?.length ? `<div class="fb-photos">${f.fotos.slice(0, 3).map((u, k) => `<button type="button" data-photo="${i}:${k}" aria-label="Ver foto ${k + 1} de ${esc(f.nome)}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}
+    <figcaption><span class="fb-av">${esc((f.nome || "?").trim().charAt(0).toUpperCase())}</span><span><b>${esc(f.nome)}</b>${f.cidade || f.instagram ? `<small>${f.cidade ? esc(f.cidade) : ""}${f.cidade && f.instagram ? " · " : ""}${f.instagram ? `<a class="fb-ig" href="https://instagram.com/${encodeURIComponent(f.instagram)}" target="_blank" rel="noopener nofollow">${icon("insta")}@${esc(f.instagram)}</a>` : ""}</small>` : ""}</span></figcaption>
   </figure>`).join("");
   // pontinhos + avanço automático suave (pausa quando a pessoa interage)
   const items = $$(".fb-item", track);
@@ -130,6 +131,24 @@ if (!fbs.length) {
   ["pointerdown", "touchstart", "wheel"].forEach((ev) => track.addEventListener(ev, pause, { passive: true }));
   track.addEventListener("mouseenter", () => clearInterval(timer)); track.addEventListener("mouseleave", start);
   new IntersectionObserver(([e]) => (e.isIntersecting ? start() : clearInterval(timer))).observe(track);
+
+  // fotos dos feedbacks: abre em tela cheia, com setas
+  track.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-photo]"); if (!b) return;
+    pause();
+    const [fi, k0] = b.dataset.photo.split(":").map(Number);
+    const f = fbs[fi], fotos = f.fotos.slice(0, 3); let k = k0;
+    const m = modal(`<div class="lightbox"><img id="lb-img" src="${esc(fotos[k])}" alt="Foto enviada por ${esc(f.nome)}">
+      ${fotos.length > 1 ? `<button class="lb-nav prev" data-lb="-1" aria-label="Anterior">${icon("left")}</button><button class="lb-nav next" data-lb="1" aria-label="Próxima">${icon("right")}</button>` : ""}
+      <p class="muted" style="margin:12px 0 0;text-align:center">Foto enviada por <b>${esc(f.nome)}</b></p></div>`);
+    m.querySelector(".modal-box").classList.add("lb-box");
+    m.addEventListener("click", (ev) => {
+      const n = ev.target.closest("[data-lb]"); if (!n) return;
+      k = (k + +n.dataset.lb + fotos.length) % fotos.length;
+      const img = m.querySelector("#lb-img"); img.style.opacity = 0;
+      setTimeout(() => { img.src = fotos[k]; img.style.opacity = 1; }, 160);
+    });
+  });
 }
 
 // formulário de feedback (entra como pendente; a loja aprova no painel)
@@ -137,21 +156,43 @@ $("#fb-open").addEventListener("click", () => {
   modal(`<h3>Conte como foi</h3><p class="muted" style="margin:0 0 16px">Seu feedback ajuda outras clientes. Ele aparece no site depois que a loja revisar.</p>
     <form id="fbf">
       <div class="field"><label for="fn">Seu nome *</label><input class="input" id="fn" maxlength="80" required autocomplete="given-name"></div>
-      <div class="field"><label for="fc">Cidade</label><input class="input" id="fc" maxlength="60" autocomplete="address-level2"></div>
+      <div class="row2">
+        <div class="field"><label for="fc">Cidade <span class="opt-tag">opcional</span></label><input class="input" id="fc" maxlength="60" autocomplete="address-level2"></div>
+        <div class="field"><label for="fig">Instagram <span class="opt-tag">opcional</span></label><div class="at-input"><span>@</span><input class="input" id="fig" maxlength="40" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="seuperfil"></div></div>
+      </div>
       <div class="field"><label>Sua nota</label><div class="star-pick" id="fs">${[1, 2, 3, 4, 5].map((i) => `<button type="button" data-n="${i}" class="on" aria-label="${i} estrela(s)">${STAR}</button>`).join("")}</div></div>
       <div class="field"><label for="ft">Comentário *</label><textarea class="textarea" id="ft" maxlength="600" required placeholder="O que você achou das peças e do atendimento?"></textarea></div>
+      <div class="field"><label>Fotos com a peça <span class="opt-tag">opcional · até ${FEEDBACK_MAX_FOTOS}</span></label>
+        <div class="fb-pick" id="fpick">
+          <label class="fb-add" id="fadd">${icon("plus")}<span>Adicionar foto</span><input type="file" id="ffile" accept="image/*" multiple hidden></label>
+        </div>
+        <span class="hint">Seu @ e suas fotos aparecem junto do seu feedback no site, se a loja aprovar.</span>
+      </div>
       <input type="text" id="fhp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
       <button class="btn btn-gold btn-block" id="fsend">Enviar feedback</button>
     </form>`, {
     onOpen(m) {
       let nota = 5;
+      const files = [];
+      const drawPick = () => {
+        m.querySelectorAll("#fpick .fb-thumb").forEach((x) => { URL.revokeObjectURL(x.dataset.url); x.remove(); });
+        m.querySelector("#fadd").insertAdjacentHTML("beforebegin", files.map((f, i) => { const u = URL.createObjectURL(f); return `<div class="fb-thumb" data-url="${u}"><img src="${u}" alt=""><button type="button" data-rmf="${i}" aria-label="Remover foto">${icon("x")}</button></div>`; }).join(""));
+        m.querySelector("#fadd").classList.toggle("hidden", files.length >= FEEDBACK_MAX_FOTOS);
+      };
+      m.querySelector("#ffile").addEventListener("change", (e) => {
+        const add = [...e.target.files].filter((f) => f.type.startsWith("image/"));
+        if (files.length + add.length > FEEDBACK_MAX_FOTOS) toast(`Você pode enviar até ${FEEDBACK_MAX_FOTOS} fotos.`, { ic: "alert" });
+        files.push(...add.slice(0, FEEDBACK_MAX_FOTOS - files.length)); e.target.value = ""; drawPick();
+      });
+      m.querySelector("#fpick").addEventListener("click", (e) => { const b = e.target.closest("[data-rmf]"); if (b) { files.splice(+b.dataset.rmf, 1); drawPick(); } });
+      m.querySelector("#fig").addEventListener("blur", (e) => { e.target.value = cleanInstagram(e.target.value); });
       m.querySelector("#fs").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; nota = +b.dataset.n; m.querySelectorAll("#fs button").forEach((x) => x.classList.toggle("on", +x.dataset.n <= nota)); });
       m.querySelector("#fbf").onsubmit = async (e) => {
         e.preventDefault();
         if (m.querySelector("#fhp").value) { closeModal(); return; } // robô
-        const btn = m.querySelector("#fsend"); btn.disabled = true; btn.textContent = "Enviando...";
+        const btn = m.querySelector("#fsend"); btn.disabled = true; btn.textContent = files.length ? "Enviando fotos..." : "Enviando...";
         try {
-          await submitFeedback({ nome: m.querySelector("#fn").value, cidade: m.querySelector("#fc").value, nota, texto: m.querySelector("#ft").value });
+          await submitFeedback({ nome: m.querySelector("#fn").value, cidade: m.querySelector("#fc").value, instagram: m.querySelector("#fig").value, nota, texto: m.querySelector("#ft").value, fotos: files });
           closeModal(); toast("Obrigada! Seu feedback foi enviado e será revisado pela loja.", { ic: "heart", ms: 5000 });
         } catch (er) { toast(er.message || "Não foi possível enviar agora.", { err: true }); btn.disabled = false; btn.textContent = "Enviar feedback"; }
       };

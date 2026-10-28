@@ -45,7 +45,7 @@ function render() {
 
   $("#count").textContent = `${list.length} ${list.length === 1 ? "peça" : "peças"}`;
   $("#grid").innerHTML = list.length ? list.map((p) => productCard(p)).join("")
-    : `<div class="empty" style="grid-column:1/-1"><img src="/assets/img/butterfly.webp" alt=""><p>Nenhuma peça encontrada com esses filtros.</p><button class="btn btn-ghost btn-sm" id="clear">Limpar filtros</button></div>`;
+    : `<div class="empty" style="grid-column:1/-1"><img class="logo-l" src="/assets/img/butterfly.webp" alt=""><img class="logo-d" src="/assets/img/butterfly-dark.webp" alt=""><p>Nenhuma peça encontrada com esses filtros.</p><button class="btn btn-ghost btn-sm" id="clear">Limpar filtros</button></div>`;
   $("#clear")?.addEventListener("click", () => { f.cat = ""; f.q = ""; f.show = ""; f.sizes.clear(); $("#f-show").value = ""; $$(".size", $("#f-sizes")).forEach((b) => b.classList.remove("sel")); render(); });
   observeReveal($("#grid"));
 
